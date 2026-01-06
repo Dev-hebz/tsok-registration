@@ -2,7 +2,7 @@
 const firebaseConfig = {
    apiKey: "AIzaSyCXF-KDN99SD84SXNzMy-RJ2kUIMxwro0A",
     authDomain: "tsokregistration.firebaseapp.com",
-    databaseURL: "https://tsokregistration-default-rtdb.firebaseio.com/",
+    databaseURL: "https://tsokregistration-default-rtdb.firebaseio.com",
     projectId: "tsokregistration",
     storageBucket: "tsokregistration.firebasestorage.app",
     messagingSenderId: "910893887334",
