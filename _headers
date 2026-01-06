@@ -1,0 +1,27 @@
+/icons/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/images/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/css/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/js/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/manifest.json
+  Cache-Control: public, max-age=0, must-revalidate
+  Content-Type: application/manifest+json
+
+/sw.js
+  Cache-Control: public, max-age=0, must-revalidate
+  Content-Type: application/javascript
+
+/favicon.ico
+  Cache-Control: public, max-age=31536000, immutable
+  Content-Type: image/x-icon
+
+/*.html
+  Cache-Control: public, max-age=0, must-revalidate
+  Content-Type: text/html; charset=utf-8

@@ -1,0 +1,268 @@
+// Firebase Configuration
+const firebaseConfig = {
+    apiKey: "YOUR_FIREBASE_API_KEY",
+    authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+    databaseURL: "https://YOUR_PROJECT_ID.firebaseio.com",
+    projectId: "YOUR_PROJECT_ID",
+    storageBucket: "YOUR_PROJECT_ID.appspot.com",
+    messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+    appId: "YOUR_APP_ID"
+};
+
+// Initialize Firebase
+firebase.initializeApp(firebaseConfig);
+const database = firebase.database();
+
+// Cloudinary Configuration
+const CLOUDINARY_CLOUD_NAME = 'df17jssg2';
+const CLOUDINARY_UPLOAD_PRESET = 'sple_uploads';
+
+// Signature Pad
+let signaturePad;
+const canvas = document.getElementById('signaturePad');
+
+function resizeCanvas() {
+    const ratio = Math.max(window.devicePixelRatio || 1, 1);
+    canvas.width = canvas.offsetWidth * ratio;
+    canvas.height = canvas.offsetHeight * ratio;
+    canvas.getContext('2d').scale(ratio, ratio);
+    if (signaturePad) {
+        signaturePad.clear();
+    }
+}
+
+window.addEventListener('resize', resizeCanvas);
+resizeCanvas();
+
+signaturePad = new SignaturePad(canvas, {
+    backgroundColor: 'rgb(255, 255, 255)',
+    penColor: 'rgb(0, 0, 0)'
+});
+
+// Clear signature
+document.getElementById('clearSignature').addEventListener('click', () => {
+    signaturePad.clear();
+});
+
+// Level and Major field logic
+const levelSelect = document.getElementById('level');
+const majorGroup = document.getElementById('majorGroup');
+const majorInput = document.getElementById('major');
+
+levelSelect.addEventListener('change', (e) => {
+    if (e.target.value === 'Secondary') {
+        majorGroup.style.display = 'block';
+        majorInput.required = true;
+    } else {
+        majorGroup.style.display = 'none';
+        majorInput.required = false;
+        majorInput.value = '';
+    }
+});
+
+// File upload handling
+const documentsInput = document.getElementById('documents');
+const fileList = document.getElementById('fileList');
+let selectedFiles = [];
+
+documentsInput.addEventListener('change', (e) => {
+    selectedFiles = Array.from(e.target.files);
+    displayFileList();
+});
+
+function displayFileList() {
+    fileList.innerHTML = '';
+    selectedFiles.forEach((file, index) => {
+        const fileItem = document.createElement('div');
+        fileItem.className = 'file-item';
+        fileItem.innerHTML = `
+            <span>📄 ${file.name} (${formatFileSize(file.size)})</span>
+            <button type="button" onclick="removeFile(${index})">Remove</button>
+        `;
+        fileList.appendChild(fileItem);
+    });
+}
+
+function removeFile(index) {
+    selectedFiles.splice(index, 1);
+    const dt = new DataTransfer();
+    selectedFiles.forEach(file => dt.items.add(file));
+    documentsInput.files = dt.files;
+    displayFileList();
+}
+
+function formatFileSize(bytes) {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+}
+
+// Convert file to base64
+function fileToBase64(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+    });
+}
+
+// Upload to Cloudinary
+async function uploadToCloudinary(base64Data, folder, fileName) {
+    const formData = new FormData();
+    formData.append('file', base64Data);
+    formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+    formData.append('folder', `tsok-registration/${folder}`);
+    formData.append('public_id', fileName);
+
+    try {
+        const response = await fetch(
+            `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/upload`,
+            {
+                method: 'POST',
+                body: formData
+            }
+        );
+
+        const data = await response.json();
+        return data.secure_url;
+    } catch (error) {
+        console.error('Cloudinary upload error:', error);
+        throw error;
+    }
+}
+
+// Form submission
+const form = document.getElementById('registrationForm');
+const submitBtn = document.getElementById('submitBtn');
+const loadingOverlay = document.getElementById('loadingOverlay');
+
+form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    // Validate signature
+    if (signaturePad.isEmpty()) {
+        showError('Please provide your signature');
+        return;
+    }
+
+    // Validate files
+    if (selectedFiles.length === 0) {
+        showError('Please upload at least one document');
+        return;
+    }
+
+    // Show loading
+    loadingOverlay.style.display = 'flex';
+    submitBtn.disabled = true;
+
+    try {
+        // Get form data
+        const formData = new FormData(form);
+        const surname = formData.get('surname');
+        const firstName = formData.get('firstName');
+        const middleName = formData.get('middleName');
+        const contactNumber = formData.get('contactNumber');
+        const whatsappNumber = formData.get('whatsappNumber');
+        const email = formData.get('email');
+        const university = formData.get('university');
+        const degree = formData.get('degree');
+        const level = formData.get('level');
+        const major = formData.get('major');
+
+        // Create folder name from surname
+        const folderName = surname.toLowerCase().replace(/\s+/g, '-');
+        const timestamp = Date.now();
+
+        // Upload documents to Cloudinary
+        const uploadedDocs = [];
+        for (let i = 0; i < selectedFiles.length; i++) {
+            const file = selectedFiles[i];
+            const base64 = await fileToBase64(file);
+            const fileName = `document-${i + 1}-${timestamp}`;
+            const url = await uploadToCloudinary(base64, folderName, fileName);
+            uploadedDocs.push({
+                name: file.name,
+                url: url
+            });
+        }
+
+        // Upload signature to Cloudinary
+        const signatureBase64 = signaturePad.toDataURL();
+        const signatureFileName = `signature-${timestamp}`;
+        const signatureUrl = await uploadToCloudinary(
+            signatureBase64,
+            folderName,
+            signatureFileName
+        );
+
+        // Save to Firebase
+        const registrationData = {
+            personalInfo: {
+                surname,
+                firstName,
+                middleName
+            },
+            contactInfo: {
+                contactNumber,
+                whatsappNumber,
+                email
+            },
+            educationalBackground: {
+                university,
+                degree,
+                level,
+                major: level === 'Secondary' ? major : null
+            },
+            documents: uploadedDocs,
+            signature: signatureUrl,
+            status: 'Pending',
+            type: 'Member',
+            remarks: '',
+            submittedAt: firebase.database.ServerValue.TIMESTAMP,
+            updatedAt: firebase.database.ServerValue.TIMESTAMP
+        };
+
+        await database.ref('registrations').push(registrationData);
+
+        // Hide loading
+        loadingOverlay.style.display = 'none';
+        submitBtn.disabled = false;
+
+        // Show success
+        showSuccess();
+
+    } catch (error) {
+        console.error('Registration error:', error);
+        loadingOverlay.style.display = 'none';
+        submitBtn.disabled = false;
+        showError(error.message || 'An error occurred during registration');
+    }
+});
+
+// Show success modal
+function showSuccess() {
+    document.getElementById('successModal').style.display = 'flex';
+}
+
+// Show error modal
+function showError(message) {
+    document.getElementById('errorMessage').textContent = message;
+    document.getElementById('errorModal').style.display = 'flex';
+}
+
+// Close modal
+function closeModal(modalId) {
+    document.getElementById(modalId).style.display = 'none';
+}
+
+// Click outside modal to close
+window.addEventListener('click', (e) => {
+    if (e.target.classList.contains('modal')) {
+        e.target.style.display = 'none';
+    }
+});
+
+console.log('TSOK Registration System - Developed by Godmisoft');
