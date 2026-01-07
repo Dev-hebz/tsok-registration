@@ -111,16 +111,19 @@ function fileToBase64(file) {
 
 // Upload to Cloudinary
 async function uploadToCloudinary(base64Data, folder, fileName) {
+    // Detect if it's a PDF or image based on base64 prefix
+    const isPDF = base64Data.startsWith('data:application/pdf');
+    const resourceType = isPDF ? 'raw' : 'image';
+    
     const formData = new FormData();
     formData.append('file', base64Data);
     formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
     formData.append('folder', `tsok-registration/${folder}`);
     formData.append('public_id', fileName);
-    formData.append('resource_type', 'auto'); // Important: allows PDFs and images
 
     try {
         const response = await fetch(
-            `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/auto/upload`, // Changed to /auto/upload
+            `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/${resourceType}/upload`,
             {
                 method: 'POST',
                 body: formData
@@ -128,6 +131,12 @@ async function uploadToCloudinary(base64Data, folder, fileName) {
         );
 
         const data = await response.json();
+        
+        if (!response.ok) {
+            console.error('Cloudinary error:', data);
+            throw new Error(data.error?.message || 'Upload failed');
+        }
+        
         return data.secure_url;
     } catch (error) {
         console.error('Cloudinary upload error:', error);
