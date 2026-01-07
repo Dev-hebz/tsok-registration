@@ -12,16 +12,98 @@ const firebaseConfig = {
 // Initialize Firebase
 firebase.initializeApp(firebaseConfig);
 const database = firebase.database();
+const auth = firebase.auth();
 
 let allRegistrations = [];
 let currentEditId = null;
 let currentDeleteId = null;
 
-// Load registrations on page load
-document.addEventListener('DOMContentLoaded', () => {
+// Check authentication on page load
+auth.onAuthStateChanged((user) => {
+    if (!user) {
+        // User not logged in, show login form
+        showLoginForm();
+    } else {
+        // User logged in, show dashboard
+        hideLoginForm();
+        loadRegistrations();
+        setupSearch();
+    }
+});
+
+// Show login form
+function showLoginForm() {
+    const loginHTML = `
+        <div id="loginOverlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); display: flex; align-items: center; justify-content: center; z-index: 9999;">
+            <div style="background: white; padding: 40px; border-radius: 10px; box-shadow: 0 10px 40px rgba(0,0,0,0.3); max-width: 400px; width: 90%;">
+                <div style="text-align: center; margin-bottom: 30px;">
+                    <img src="/images/tsok-logo.png" alt="TSOK Logo" style="height: 80px; margin-bottom: 15px;">
+                    <h2 style="color: #2E4C96; margin: 0;">Admin Login</h2>
+                    <p style="color: #666; font-size: 14px; margin-top: 5px;">TSOK Registration System</p>
+                </div>
+                <form id="loginForm" style="display: flex; flex-direction: column; gap: 15px;">
+                    <div>
+                        <label style="display: block; margin-bottom: 5px; color: #333; font-weight: 500;">Email</label>
+                        <input type="email" id="loginEmail" required style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 5px; font-size: 14px;" placeholder="admin@tsok.org">
+                    </div>
+                    <div>
+                        <label style="display: block; margin-bottom: 5px; color: #333; font-weight: 500;">Password</label>
+                        <input type="password" id="loginPassword" required style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 5px; font-size: 14px;" placeholder="••••••••">
+                    </div>
+                    <button type="submit" style="background: #2E4C96; color: white; padding: 12px; border: none; border-radius: 5px; font-size: 16px; font-weight: 600; cursor: pointer; margin-top: 10px;">Login</button>
+                    <div id="loginError" style="color: #dc3545; font-size: 14px; text-align: center; display: none; margin-top: 10px;"></div>
+                </form>
+            </div>
+        </div>
+    `;
+    document.body.insertAdjacentHTML('beforeend', loginHTML);
+    
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const email = document.getElementById('loginEmail').value;
+        const password = document.getElementById('loginPassword').value;
+        const errorDiv = document.getElementById('loginError');
+        
+        try {
+            await auth.signInWithEmailAndPassword(email, password);
+            // Login successful, overlay will be removed by onAuthStateChanged
+        } catch (error) {
+            errorDiv.textContent = 'Invalid email or password';
+            errorDiv.style.display = 'block';
+        }
+    });
+}
+
+// Hide login form
+function hideLoginForm() {
+    const overlay = document.getElementById('loginOverlay');
+    if (overlay) overlay.remove();
+}
+
+// Logout function
+function logout() {
+    auth.signOut().then(() => {
+        showLoginForm();
+    });
+}
+
+// Load registrations on page load (called after auth check)
+function initializePage() {
     loadRegistrations();
     setupSearch();
-});
+    
+    // Add logout button
+    const header = document.querySelector('header');
+    if (header && !document.getElementById('logoutBtn')) {
+        const logoutBtn = document.createElement('button');
+        logoutBtn.id = 'logoutBtn';
+        logoutBtn.innerHTML = '🚪 Logout';
+        logoutBtn.style.cssText = 'position: absolute; top: 20px; right: 20px; background: #dc3545; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: 600;';
+        logoutBtn.onclick = logout;
+        header.style.position = 'relative';
+        header.appendChild(logoutBtn);
+    }
+}
 
 // Load all registrations from Firebase
 async function loadRegistrations() {
@@ -65,7 +147,7 @@ function displayRegistrations(registrations) {
     if (registrations.length === 0) {
         tbody.innerHTML = `
             <tr>
-                <td colspan="9" class="no-data">
+                <td colspan="10" class="no-data">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <circle cx="12" cy="12" r="10"></circle>
                         <line x1="12" y1="8" x2="12" y2="12"></line>
@@ -86,6 +168,7 @@ function displayRegistrations(registrations) {
         const level = reg.educationalBackground?.level || 'N/A';
         const type = reg.type || 'Member';
         const status = reg.status || 'Pending';
+        const remarks = reg.remarks || '-';
         const date = reg.submittedAt ? new Date(reg.submittedAt).toLocaleDateString() : 'N/A';
 
         return `
@@ -97,6 +180,7 @@ function displayRegistrations(registrations) {
                 <td>${level}</td>
                 <td><span class="type-badge type-${type.toLowerCase().replace(' ', '-')}">${type}</span></td>
                 <td><span class="status-badge status-${status.toLowerCase()}">${status}</span></td>
+                <td><em style="color: #666;">${remarks}</em></td>
                 <td>${date}</td>
                 <td>
                     <div class="action-buttons">
@@ -197,15 +281,19 @@ function viewRegistration(id) {
         <div class="detail-section">
             <h3>Documents</h3>
             <div class="documents-list">
-                ${reg.documents?.map((doc, i) => `
-                    <a href="${doc.url}" target="_blank" class="document-link">
+                ${reg.documents?.map((doc, i) => {
+                    const isPDF = doc.url.toLowerCase().endsWith('.pdf');
+                    const viewerURL = isPDF ? `https://docs.google.com/viewer?url=${encodeURIComponent(doc.url)}&embedded=true` : doc.url;
+                    return `
+                    <a href="${viewerURL}" target="_blank" class="document-link" ${isPDF ? 'onclick="window.open(this.href, \'_blank\', \'width=1000,height=800\'); return false;"' : ''}>
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
                             <polyline points="14 2 14 8 20 8"></polyline>
                         </svg>
-                        ${doc.name || `Document ${i + 1}`}
+                        ${doc.name || `Document ${i + 1}`} ${isPDF ? '📄 PDF' : ''}
                     </a>
-                `).join('') || '<p>No documents uploaded</p>'}
+                    `;
+                }).join('') || '<p>No documents uploaded</p>'}
             </div>
         </div>
 
@@ -416,16 +504,54 @@ function closeDeleteModal() {
 // Export to Excel
 async function exportToExcel() {
     try {
-        const response = await fetch('/api/export/excel');
-        const blob = await response.blob();
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `TSOK-Registrations-${Date.now()}.xlsx`;
-        document.body.appendChild(a);
-        a.click();
-        window.URL.revokeObjectURL(url);
-        document.body.removeChild(a);
+        // Prepare data for export
+        const data = allRegistrations.map(reg => ({
+            'Registration ID': reg.id,
+            'Surname': reg.personalInfo?.surname || '',
+            'First Name': reg.personalInfo?.firstName || '',
+            'Middle Name': reg.personalInfo?.middleName || '',
+            'Contact Number': reg.contactInfo?.contactNumber || '',
+            'WhatsApp Number': reg.contactInfo?.whatsappNumber || '',
+            'Email': reg.contactInfo?.email || '',
+            'University': reg.educationalBackground?.university || '',
+            'Degree': reg.educationalBackground?.degree || '',
+            'Level': reg.educationalBackground?.level || '',
+            'Major': reg.educationalBackground?.major || 'N/A',
+            'Type': reg.type || 'Member',
+            'Remarks': reg.remarks || '',
+            'Status': reg.status || 'Pending',
+            'Submitted Date': reg.submittedAt ? new Date(reg.submittedAt).toLocaleString() : ''
+        }));
+
+        // Create workbook and worksheet
+        const wb = XLSX.utils.book_new();
+        const ws = XLSX.utils.json_to_sheet(data);
+
+        // Set column widths
+        ws['!cols'] = [
+            { wch: 20 }, // Registration ID
+            { wch: 20 }, // Surname
+            { wch: 20 }, // First Name
+            { wch: 20 }, // Middle Name
+            { wch: 20 }, // Contact Number
+            { wch: 20 }, // WhatsApp Number
+            { wch: 30 }, // Email
+            { wch: 30 }, // University
+            { wch: 35 }, // Degree
+            { wch: 15 }, // Level
+            { wch: 30 }, // Major
+            { wch: 20 }, // Type
+            { wch: 30 }, // Remarks
+            { wch: 15 }, // Status
+            { wch: 25 }  // Submitted Date
+        ];
+
+        // Add worksheet to workbook
+        XLSX.utils.book_append_sheet(wb, ws, 'TSOK Registrations');
+
+        // Generate Excel file and download
+        XLSX.writeFile(wb, `TSOK-Registrations-${new Date().toISOString().split('T')[0]}.xlsx`);
+        
         showSuccessMessage('Export completed successfully');
     } catch (error) {
         console.error('Export error:', error);
