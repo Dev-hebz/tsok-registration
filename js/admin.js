@@ -17,22 +17,34 @@ const auth = firebase.auth();
 let allRegistrations = [];
 let currentEditId = null;
 let currentDeleteId = null;
+let isInitialized = false;
 
 // Check authentication on page load
 auth.onAuthStateChanged((user) => {
     if (!user) {
         // User not logged in, show login form
-        showLoginForm();
+        if (!document.getElementById('loginOverlay')) {
+            showLoginForm();
+        }
     } else {
         // User logged in, show dashboard
         hideLoginForm();
-        loadRegistrations();
-        setupSearch();
+        if (!isInitialized) {
+            loadRegistrations();
+            setupSearch();
+            addLogoutButton();
+            isInitialized = true;
+        }
     }
 });
 
 // Show login form
 function showLoginForm() {
+    // Prevent duplicate login forms
+    if (document.getElementById('loginOverlay')) {
+        return;
+    }
+    
     const loginHTML = `
         <div id="loginOverlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); display: flex; align-items: center; justify-content: center; z-index: 9999;">
             <div style="background: white; padding: 40px; border-radius: 10px; box-shadow: 0 10px 40px rgba(0,0,0,0.3); max-width: 400px; width: 90%;">
@@ -82,17 +94,12 @@ function hideLoginForm() {
 
 // Logout function
 function logout() {
-    auth.signOut().then(() => {
-        showLoginForm();
-    });
+    isInitialized = false;
+    auth.signOut();
 }
 
-// Load registrations on page load (called after auth check)
-function initializePage() {
-    loadRegistrations();
-    setupSearch();
-    
-    // Add logout button
+// Add logout button
+function addLogoutButton() {
     const header = document.querySelector('header');
     if (header && !document.getElementById('logoutBtn')) {
         const logoutBtn = document.createElement('button');
