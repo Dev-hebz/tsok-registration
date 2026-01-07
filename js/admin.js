@@ -283,14 +283,15 @@ function viewRegistration(id) {
             <div class="documents-list">
                 ${reg.documents?.map((doc, i) => {
                     const isPDF = doc.url.toLowerCase().endsWith('.pdf');
-                    const viewerURL = isPDF ? `https://docs.google.com/viewer?url=${encodeURIComponent(doc.url)}&embedded=true` : doc.url;
+                    // Cloudinary PDFs: Open directly in new tab for browser's built-in PDF viewer
+                    const finalURL = doc.url;
                     return `
-                    <a href="${viewerURL}" target="_blank" class="document-link" ${isPDF ? 'onclick="window.open(this.href, \'_blank\', \'width=1000,height=800\'); return false;"' : ''}>
+                    <a href="${finalURL}" target="_blank" rel="noopener noreferrer" class="document-link">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
                             <polyline points="14 2 14 8 20 8"></polyline>
                         </svg>
-                        ${doc.name || `Document ${i + 1}`} ${isPDF ? '📄 PDF' : ''}
+                        ${doc.name || `Document ${i + 1}`} ${isPDF ? '📄' : '🖼️'}
                     </a>
                     `;
                 }).join('') || '<p>No documents uploaded</p>'}
