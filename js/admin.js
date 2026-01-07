@@ -290,15 +290,31 @@ function viewRegistration(id) {
             <div class="documents-list">
                 ${reg.documents?.map((doc, i) => {
                     const isPDF = doc.url.toLowerCase().endsWith('.pdf');
-                    // Cloudinary PDFs: Open directly in new tab for browser's built-in PDF viewer
-                    const finalURL = doc.url;
+                    const isImage = doc.url.match(/\.(jpg|jpeg|png|gif)$/i);
+                    
+                    // Get file extension from URL or default
+                    let extension = '';
+                    if (isPDF) extension = '.pdf';
+                    else if (isImage) {
+                        const match = doc.url.match(/\.(jpg|jpeg|png|gif)$/i);
+                        extension = match ? match[0] : '.jpg';
+                    }
+                    
+                    // Create proper filename with extension
+                    const fileName = doc.name || `Document-${i + 1}`;
+                    const downloadName = fileName.includes('.') ? fileName : fileName + extension;
+                    
                     return `
-                    <a href="${finalURL}" target="_blank" rel="noopener noreferrer" class="document-link">
+                    <a href="${doc.url}" 
+                       target="_blank" 
+                       rel="noopener noreferrer" 
+                       download="${downloadName}"
+                       class="document-link">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
                             <polyline points="14 2 14 8 20 8"></polyline>
                         </svg>
-                        ${doc.name || `Document ${i + 1}`} ${isPDF ? '📄' : '🖼️'}
+                        ${downloadName} ${isPDF ? '📄' : '🖼️'}
                     </a>
                     `;
                 }).join('') || '<p>No documents uploaded</p>'}
