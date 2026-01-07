@@ -116,10 +116,11 @@ async function uploadToCloudinary(base64Data, folder, fileName) {
     formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
     formData.append('folder', `tsok-registration/${folder}`);
     formData.append('public_id', fileName);
+    formData.append('resource_type', 'auto'); // Important: allows PDFs and images
 
     try {
         const response = await fetch(
-            `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/upload`,
+            `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/auto/upload`, // Changed to /auto/upload
             {
                 method: 'POST',
                 body: formData
