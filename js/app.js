@@ -185,23 +185,33 @@ form.addEventListener('submit', async (e) => {
         // Create folder name from surname
         const folderName = surname.toLowerCase().replace(/\s+/g, '-');
         const timestamp = Date.now();
+        const randomNum = Math.floor(Math.random() * 10000); // Random 4-digit number
 
         // Upload documents to Cloudinary
         const uploadedDocs = [];
         for (let i = 0; i < selectedFiles.length; i++) {
             const file = selectedFiles[i];
             const base64 = await fileToBase64(file);
-            const fileName = `document-${i + 1}-${timestamp}`;
+            
+            // Get file extension
+            const fileExt = file.name.split('.').pop().toLowerCase();
+            
+            // Format: lastname-xxxx (e.g., mayormita-1234.pdf)
+            const fileName = `${folderName}-${randomNum + i}`;
+            
             const url = await uploadToCloudinary(base64, folderName, fileName);
             uploadedDocs.push({
-                name: file.name,
+                name: `${fileName}.${fileExt}`, // Save with extension
                 url: url
             });
         }
 
         // Upload signature to Cloudinary
         const signatureBase64 = signaturePad.toDataURL();
-        const signatureFileName = `signature-${timestamp}`;
+        
+        // Format: lastname-signature (e.g., mayormita-signature.png)
+        const signatureFileName = `${folderName}-signature`;
+        
         const signatureUrl = await uploadToCloudinary(
             signatureBase64,
             folderName,
