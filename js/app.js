@@ -17,6 +17,17 @@ const database = firebase.database();
 const CLOUDINARY_CLOUD_NAME = 'df17jssg2';
 const CLOUDINARY_UPLOAD_PRESET = 'sple_uploads';
 
+// EmailJS Configuration
+// IMPORTANT: Replace these with your actual EmailJS credentials from https://www.emailjs.com/
+const EMAILJS_PUBLIC_KEY = 'DacF66ft39K859Y5s'; // Get from EmailJS Dashboard
+const EMAILJS_SERVICE_ID = 'service_6457cjo';         // Get from EmailJS Services
+const EMAILJS_TEMPLATE_ID = 'template_9ygnhpn';       // Get from EmailJS Templates
+
+// Initialize EmailJS
+if (typeof emailjs !== 'undefined' && EMAILJS_PUBLIC_KEY !== 'YOUR_EMAILJS_PUBLIC_KEY') {
+    emailjs.init(EMAILJS_PUBLIC_KEY);
+}
+
 // Signature Pad
 let signaturePad;
 const canvas = document.getElementById('signaturePad');
@@ -247,6 +258,16 @@ form.addEventListener('submit', async (e) => {
 
         await database.ref('registrations').push(registrationData);
 
+        // Send confirmation email (if EmailJS is configured)
+        if (typeof emailjs !== 'undefined' && EMAILJS_PUBLIC_KEY !== 'YOUR_EMAILJS_PUBLIC_KEY') {
+            try {
+                await sendConfirmationEmail(email, firstName, surname);
+            } catch (emailError) {
+                console.error('Email sending failed:', emailError);
+                // Continue even if email fails - registration was successful
+            }
+        }
+
         // Hide loading
         loadingOverlay.style.display = 'none';
         submitBtn.disabled = false;
@@ -284,5 +305,35 @@ window.addEventListener('click', (e) => {
         e.target.style.display = 'none';
     }
 });
+
+// Send confirmation email function
+async function sendConfirmationEmail(toEmail, firstName, lastName) {
+    const templateParams = {
+        to_email: toEmail,
+        to_name: `${firstName} ${lastName}`,
+        applicant_name: `${firstName} ${lastName}`,
+        registration_date: new Date().toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        }),
+        // TSOK organization details
+        from_name: 'TSOK Officers 2026',
+        reply_to: 'tsokkuwait@gmail.com' // Replace with actual TSOK email
+    };
+
+    try {
+        const response = await emailjs.send(
+            EMAILJS_SERVICE_ID,
+            EMAILJS_TEMPLATE_ID,
+            templateParams
+        );
+        console.log('Email sent successfully!', response.status, response.text);
+        return response;
+    } catch (error) {
+        console.error('Email sending failed:', error);
+        throw error;
+    }
+}
 
 console.log('TSOK Registration System - Developed by Godmisoft');
