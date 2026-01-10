@@ -19,8 +19,89 @@ let currentEditId = null;
 let currentDeleteId = null;
 let isInitialized = false;
 
+// ==================== ACTIVITY LOG ADDITIONS ====================
+let currentUser = null;
+let userLocation = null;
+
+// Get GPS Location
+async function getUserLocation() {
+    return new Promise((resolve) => {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    resolve({
+                        latitude: position.coords.latitude,
+                        longitude: position.coords.longitude,
+                        accuracy: position.coords.accuracy
+                    });
+                },
+                (error) => {
+                    console.log('Location access denied or unavailable');
+                    resolve(null);
+                }
+            );
+        } else {
+            resolve(null);
+        }
+    });
+}
+
+// Get IP-based Location
+async function getIPLocation() {
+    try {
+        const response = await fetch('https://ipapi.co/json/');
+        const data = await response.json();
+        return {
+            city: data.city,
+            region: data.region,
+            country: data.country_name,
+            ip: data.ip
+        };
+    } catch (error) {
+        return { city: 'Unknown', country: 'Unknown', ip: 'Unknown' };
+    }
+}
+
+// Log Activity
+async function logActivity(action, details = {}) {
+    if (!currentUser) return;
+    
+    const timestamp = Date.now();
+    const ipLocation = await getIPLocation();
+    
+    const activityData = {
+        action: action,
+        adminEmail: currentUser.email,
+        adminName: currentUser.displayName || currentUser.email.split('@')[0],
+        timestamp: timestamp,
+        date: new Date(timestamp).toLocaleString('en-US', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit'
+        }),
+        location: {
+            gps: userLocation,
+            ip: ipLocation
+        },
+        details: details,
+        userAgent: navigator.userAgent,
+        platform: navigator.platform
+    };
+    
+    try {
+        await database.ref('activityLogs').push(activityData);
+        console.log('Activity logged:', action);
+    } catch (error) {
+        console.error('Failed to log activity:', error);
+    }
+}
+// ==================== END ACTIVITY LOG ADDITIONS ====================
+
 // Check authentication on page load
-auth.onAuthStateChanged((user) => {
+auth.onAuthStateChanged(async (user) => {
     if (!user) {
         // User not logged in, show login form
         if (!document.getElementById('loginOverlay')) {
@@ -28,11 +109,19 @@ auth.onAuthStateChanged((user) => {
         }
     } else {
         // User logged in, show dashboard
+        currentUser = user; // ACTIVITY LOG: Set current user
+        userLocation = await getUserLocation(); // ACTIVITY LOG: Get location
+        
         hideLoginForm();
         if (!isInitialized) {
             loadRegistrations();
             setupSearch();
             addLogoutButton();
+            addActivityLogButton(); // ACTIVITY LOG: Add button
+            
+            // ACTIVITY LOG: Log login
+            await logActivity('LOGIN', { message: 'Admin logged in' });
+            
             isInitialized = true;
         }
     }
@@ -94,8 +183,11 @@ function hideLoginForm() {
 
 // Logout function
 function logout() {
-    isInitialized = false;
-    auth.signOut();
+    // ACTIVITY LOG: Log logout before signing out
+    logActivity('LOGOUT', { message: 'Admin logged out' }).then(() => {
+        isInitialized = false;
+        auth.signOut();
+    });
 }
 
 // Add logout button
@@ -111,6 +203,20 @@ function addLogoutButton() {
         header.appendChild(logoutBtn);
     }
 }
+
+// ==================== ACTIVITY LOG: Add Activity Log Button ====================
+function addActivityLogButton() {
+    const header = document.querySelector('header');
+    if (header && !document.getElementById('activityLogBtn')) {
+        const logBtn = document.createElement('button');
+        logBtn.id = 'activityLogBtn';
+        logBtn.innerHTML = '📋 Activity Log';
+        logBtn.style.cssText = 'position: absolute; top: 20px; right: 150px; background: #10B981; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: 600;';
+        logBtn.onclick = showActivityLog;
+        header.appendChild(logBtn);
+    }
+}
+// ==================== END ACTIVITY LOG BUTTON ====================
 
 // Load all registrations from Firebase
 async function loadRegistrations() {
@@ -223,6 +329,12 @@ function displayRegistrations(registrations) {
 function viewRegistration(id) {
     const reg = allRegistrations.find(r => r.id === id);
     if (!reg) return;
+
+    // ACTIVITY LOG: Log view action
+    logActivity('VIEW', { 
+        registrationId: id, 
+        registrationName: `${reg.personalInfo?.surname || ''} ${reg.personalInfo?.firstName || ''}`.trim()
+    });
 
     const content = `
         <div class="detail-section">
@@ -483,6 +595,13 @@ async function saveChanges() {
 
         await database.ref(`registrations/${currentEditId}`).update(updateData);
 
+        // ACTIVITY LOG: Log edit action
+        const fullName = `${updateData.personalInfo.surname} ${updateData.personalInfo.firstName}`.trim();
+        await logActivity('EDIT', { 
+            registrationId: currentEditId, 
+            registrationName: fullName 
+        });
+
         closeDetailModal();
         loadRegistrations();
         showSuccessMessage('Registration updated successfully');
@@ -504,7 +623,18 @@ async function confirmDelete() {
     if (!currentDeleteId) return;
 
     try {
+        // Get registration name before deleting
+        const reg = allRegistrations.find(r => r.id === currentDeleteId);
+        const regName = reg ? `${reg.personalInfo?.surname || ''} ${reg.personalInfo?.firstName || ''}`.trim() : 'Unknown';
+        
         await database.ref(`registrations/${currentDeleteId}`).remove();
+        
+        // ACTIVITY LOG: Log delete action
+        await logActivity('DELETE', { 
+            registrationId: currentDeleteId, 
+            registrationName: regName 
+        });
+        
         closeDeleteModal();
         loadRegistrations();
         showSuccessMessage('Registration deleted successfully');
@@ -576,6 +706,12 @@ async function exportToExcel() {
         // Generate Excel file and download
         XLSX.writeFile(wb, `TSOK-Registrations-${new Date().toISOString().split('T')[0]}.xlsx`);
         
+        // ACTIVITY LOG: Log export action
+        await logActivity('EXPORT', { 
+            format: 'Excel', 
+            recordCount: allRegistrations.length 
+        });
+        
         showSuccessMessage('Export completed successfully');
     } catch (error) {
         console.error('Export error:', error);
@@ -601,6 +737,137 @@ function setupSearch() {
     });
 }
 
+// ==================== ACTIVITY LOG MODAL FUNCTIONS ====================
+// Show Activity Log Modal
+async function showActivityLog() {
+    const snapshot = await database.ref('activityLogs').orderByChild('timestamp').limitToLast(100).once('value');
+    const logs = [];
+    
+    snapshot.forEach((child) => {
+        logs.unshift({ id: child.key, ...child.val() });
+    });
+    
+    const logsHTML = logs.map(log => `
+        <tr>
+            <td style="padding: 12px; border-bottom: 1px solid #E5E7EB;">${log.date}</td>
+            <td style="padding: 12px; border-bottom: 1px solid #E5E7EB;"><strong>${log.adminName}</strong><br><small style="color: #666;">${log.adminEmail}</small></td>
+            <td style="padding: 12px; border-bottom: 1px solid #E5E7EB;"><span class="action-badge action-${log.action.toLowerCase()}">${log.action}</span></td>
+            <td style="padding: 12px; border-bottom: 1px solid #E5E7EB;">${log.details.registrationName || log.details.message || '-'}</td>
+            <td style="padding: 12px; border-bottom: 1px solid #E5E7EB;">
+                <strong>${log.location.ip.city}, ${log.location.ip.country}</strong><br>
+                <small style="color: #666;">IP: ${log.location.ip.ip}</small>
+                ${log.location.gps ? `<br><small style="color: #666;">GPS: ${log.location.gps.latitude.toFixed(4)}, ${log.location.gps.longitude.toFixed(4)}</small>` : ''}
+            </td>
+        </tr>
+    `).join('');
+    
+    const modalHTML = `
+        <div id="activityLogModal" class="modal" style="display: flex;">
+            <div class="modal-content" style="max-width: 90%; max-height: 90vh; overflow-y: auto;">
+                <div class="modal-header">
+                    <h2>📋 Activity Log</h2>
+                    <button onclick="closeActivityLogModal()" class="close-btn">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div style="margin-bottom: 20px;">
+                        <button onclick="exportActivityLog()" style="background: #10B981; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; font-weight: 600;">
+                            📥 Export to Excel
+                        </button>
+                        <button onclick="clearOldLogs()" style="background: #EF4444; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; margin-left: 10px; font-weight: 600;">
+                            🗑️ Clear Old Logs (>30 days)
+                        </button>
+                    </div>
+                    <table style="width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden;">
+                        <thead>
+                            <tr style="background: #2E4C96; color: white;">
+                                <th style="padding: 12px; text-align: left;">Date & Time</th>
+                                <th style="padding: 12px; text-align: left;">Admin</th>
+                                <th style="padding: 12px; text-align: left;">Action</th>
+                                <th style="padding: 12px; text-align: left;">Details</th>
+                                <th style="padding: 12px; text-align: left;">Location</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${logsHTML || '<tr><td colspan="5" style="text-align: center; padding: 20px;">No activity logs found</td></tr>'}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+}
+
+function closeActivityLogModal() {
+    const modal = document.getElementById('activityLogModal');
+    if (modal) modal.remove();
+}
+
+// Export Activity Log to Excel
+async function exportActivityLog() {
+    const snapshot = await database.ref('activityLogs').orderByChild('timestamp').once('value');
+    const logs = [];
+    
+    snapshot.forEach((child) => {
+        const log = child.val();
+        logs.push({
+            'Date & Time': log.date,
+            'Admin Name': log.adminName,
+            'Admin Email': log.adminEmail,
+            'Action': log.action,
+            'Details': log.details.registrationName || log.details.message || '-',
+            'City': log.location.ip.city,
+            'Country': log.location.ip.country,
+            'IP Address': log.location.ip.ip,
+            'GPS Latitude': log.location.gps ? log.location.gps.latitude : 'N/A',
+            'GPS Longitude': log.location.gps ? log.location.gps.longitude : 'N/A',
+            'Platform': log.platform,
+            'User Agent': log.userAgent
+        });
+    });
+    
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.json_to_sheet(logs);
+    
+    ws['!cols'] = [
+        { wch: 25 }, { wch: 20 }, { wch: 30 }, { wch: 15 }, { wch: 30 },
+        { wch: 15 }, { wch: 15 }, { wch: 20 }, { wch: 15 }, { wch: 15 },
+        { wch: 15 }, { wch: 50 }
+    ];
+    
+    XLSX.utils.book_append_sheet(wb, ws, 'Activity Logs');
+    XLSX.writeFile(wb, `TSOK-Activity-Log-${new Date().toISOString().split('T')[0]}.xlsx`);
+    
+    showSuccessMessage('Activity log exported successfully!');
+}
+
+// Clear old logs (>30 days)
+async function clearOldLogs() {
+    if (!confirm('Delete all activity logs older than 30 days?')) return;
+    
+    const thirtyDaysAgo = Date.now() - (30 * 24 * 60 * 60 * 1000);
+    const snapshot = await database.ref('activityLogs').orderByChild('timestamp').endAt(thirtyDaysAgo).once('value');
+    
+    let count = 0;
+    const updates = {};
+    snapshot.forEach((child) => {
+        updates[`activityLogs/${child.key}`] = null;
+        count++;
+    });
+    
+    if (count > 0) {
+        await database.ref().update(updates);
+        await logActivity('CLEAR_LOGS', { message: `Cleared ${count} old logs` });
+        showSuccessMessage(`Deleted ${count} old activity logs`);
+        closeActivityLogModal();
+        showActivityLog();
+    } else {
+        showSuccessMessage('No old logs to delete');
+    }
+}
+// ==================== END ACTIVITY LOG MODAL FUNCTIONS ====================
+
 // Show messages
 function showSuccessMessage(message) {
     alert(message);
@@ -620,4 +887,24 @@ window.addEventListener('click', (e) => {
     }
 });
 
-console.log('TSOK Admin Dashboard - Developed by Godmisoft');
+// Add CSS for action badges
+const style = document.createElement('style');
+style.textContent = `
+    .action-badge {
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-size: 12px;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+    .action-login { background: #10B981; color: white; }
+    .action-logout { background: #6B7280; color: white; }
+    .action-edit { background: #3B82F6; color: white; }
+    .action-delete { background: #EF4444; color: white; }
+    .action-export { background: #8B5CF6; color: white; }
+    .action-view { background: #F59E0B; color: white; }
+    .action-clear_logs { background: #EC4899; color: white; }
+`;
+document.head.appendChild(style);
+
+console.log('TSOK Admin Dashboard with Activity Log - Developed by 2026 TSOK Officers');
