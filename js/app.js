@@ -340,4 +340,4 @@ async function sendConfirmationEmail(toEmail, firstName, lastName) {
     }
 }
 
-console.log('TSOK Registration System - Developed by Godmisoft');
+console.log('TSOK Registration System - TSOK 2026 Officers');
