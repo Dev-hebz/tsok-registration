@@ -18,10 +18,9 @@ const CLOUDINARY_CLOUD_NAME = 'df17jssg2';
 const CLOUDINARY_UPLOAD_PRESET = 'sple_uploads';
 
 // EmailJS Configuration
-// IMPORTANT: Replace these with your actual EmailJS credentials from https://www.emailjs.com/
-const EMAILJS_PUBLIC_KEY = 'DacF66ft39K859Y5s'; // Get from EmailJS Dashboard
-const EMAILJS_SERVICE_ID = 'service_6457cjo';         // Get from EmailJS Services
-const EMAILJS_TEMPLATE_ID = 'template_9ygnhpn';       // Get from EmailJS Templates
+const EMAILJS_PUBLIC_KEY = 'DacF66ft39K859Y5s';
+const EMAILJS_SERVICE_ID = 'service_6457cjo';
+const EMAILJS_TEMPLATE_ID = 'template_9ygnhpn';
 
 // Initialize EmailJS
 if (typeof emailjs !== 'undefined' && EMAILJS_PUBLIC_KEY !== 'YOUR_EMAILJS_PUBLIC_KEY') {
@@ -61,6 +60,18 @@ const majorGroup = document.getElementById('majorGroup');
 const majorInput = document.getElementById('major');
 
 levelSelect.addEventListener('change', (e) => {
+    if (e.target.value === 'Secondary') {
+        majorGroup.style.display = 'block';
+        majorInput.required = true;
+    } else {
+        majorGroup.style.display = 'none';
+        majorInput.required = false;
+        majorInput.value = '';
+    }
+});
+
+// Also handle input event for datalist
+levelSelect.addEventListener('input', (e) => {
     if (e.target.value === 'Secondary') {
         majorGroup.style.display = 'block';
         majorInput.required = true;
@@ -122,7 +133,6 @@ function fileToBase64(file) {
 
 // Upload to Cloudinary
 async function uploadToCloudinary(base64Data, folder, fileName) {
-    // Detect if it's a PDF or image based on base64 prefix
     const isPDF = base64Data.startsWith('data:application/pdf');
     const resourceType = isPDF ? 'raw' : 'image';
     
@@ -196,7 +206,7 @@ form.addEventListener('submit', async (e) => {
         // Create folder name from surname
         const folderName = surname.toLowerCase().replace(/\s+/g, '-');
         const timestamp = Date.now();
-        const randomNum = Math.floor(Math.random() * 10000); // Random 4-digit number
+        const randomNum = Math.floor(Math.random() * 10000);
 
         // Upload documents to Cloudinary
         const uploadedDocs = [];
@@ -204,23 +214,18 @@ form.addEventListener('submit', async (e) => {
             const file = selectedFiles[i];
             const base64 = await fileToBase64(file);
             
-            // Get file extension
             const fileExt = file.name.split('.').pop().toLowerCase();
-            
-            // Format: lastname-xxxx (e.g., mayormita-1234.pdf)
             const fileName = `${folderName}-${randomNum + i}`;
             
             const url = await uploadToCloudinary(base64, folderName, fileName);
             uploadedDocs.push({
-                name: `${fileName}.${fileExt}`, // Save with extension
+                name: `${fileName}.${fileExt}`,
                 url: url
             });
         }
 
         // Upload signature to Cloudinary
         const signatureBase64 = signaturePad.toDataURL();
-        
-        // Format: lastname-signature (e.g., mayormita-signature.png)
         const signatureFileName = `${folderName}-signature`;
         
         const signatureUrl = await uploadToCloudinary(
@@ -251,6 +256,7 @@ form.addEventListener('submit', async (e) => {
             signature: signatureUrl,
             status: 'Pending',
             type: 'Member',
+            paymentStatus: 'Pending',
             remarks: '',
             submittedAt: firebase.database.ServerValue.TIMESTAMP,
             updatedAt: firebase.database.ServerValue.TIMESTAMP
@@ -258,13 +264,12 @@ form.addEventListener('submit', async (e) => {
 
         await database.ref('registrations').push(registrationData);
 
-        // Send confirmation email (if EmailJS is configured)
+        // Send confirmation email
         if (typeof emailjs !== 'undefined' && EMAILJS_PUBLIC_KEY !== 'YOUR_EMAILJS_PUBLIC_KEY') {
             try {
                 await sendConfirmationEmail(email, firstName, surname);
             } catch (emailError) {
                 console.error('Email sending failed:', emailError);
-                // Continue even if email fails - registration was successful
             }
         }
 
@@ -317,9 +322,8 @@ async function sendConfirmationEmail(toEmail, firstName, lastName) {
             month: 'long',
             day: 'numeric'
         }),
-        // TSOK organization details
         from_name: 'TSOK Officers 2026',
-        reply_to: 'tsokkuwait@gmail.com' // Replace with actual TSOK email
+        reply_to: 'tsokkuwait@gmail.com'
     };
 
     try {
