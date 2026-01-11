@@ -281,6 +281,10 @@ function displayRegistrations(registrations) {
         const level = reg.educationalBackground?.level || 'N/A';
         const type = reg.type || 'Member';
         const status = reg.status || 'Pending';
+        const paymentStatus = reg.paymentStatus || 'Pending';
+        const examineeStatus = reg.examineeStatus || 'First-Timer';
+        const membershipFee = reg.membershipFee || 'Unpaid';
+        const incidentalFee = reg.incidentalFee || 'Unpaid';
         const remarks = reg.remarks || '-';
         const date = reg.submittedAt ? new Date(reg.submittedAt).toLocaleDateString() : 'N/A';
 
@@ -293,6 +297,10 @@ function displayRegistrations(registrations) {
                 <td>${level}</td>
                 <td><span class="type-badge type-${type.toLowerCase().replace(' ', '-')}">${type}</span></td>
                 <td><span class="status-badge status-${status.toLowerCase()}">${status}</span></td>
+                <td><span class="payment-badge payment-${paymentStatus.toLowerCase()}">${paymentStatus}</span></td>
+                <td><span class="examinee-badge examinee-${examineeStatus.toLowerCase().replace('-', '')}">${examineeStatus}</span></td>
+                <td><span class="fee-badge fee-${membershipFee.toLowerCase()}">${membershipFee}</span></td>
+                <td><span class="fee-badge fee-${incidentalFee.toLowerCase()}">${incidentalFee}</span></td>
                 <td><em style="color: #666;">${remarks}</em></td>
                 <td>${date}</td>
                 <td>
@@ -450,6 +458,22 @@ function viewRegistration(id) {
                     <p>${reg.status || 'Pending'}</p>
                 </div>
                 <div class="detail-item">
+                    <label>Payment Status</label>
+                    <p>${reg.paymentStatus || 'Pending'}</p>
+                </div>
+                <div class="detail-item">
+                    <label>Examinee Status</label>
+                    <p>${reg.examineeStatus || 'First-Timer'}</p>
+                </div>
+                <div class="detail-item">
+                    <label>Membership Fee</label>
+                    <p>${reg.membershipFee || 'Unpaid'}</p>
+                </div>
+                <div class="detail-item">
+                    <label>Incidental Fee</label>
+                    <p>${reg.incidentalFee || 'Unpaid'}</p>
+                </div>
+                <div class="detail-item">
                     <label>Remarks</label>
                     <p>${reg.remarks || 'No remarks'}</p>
                 </div>
@@ -531,6 +555,28 @@ function editRegistration(id) {
         </div>
 
         <div class="detail-section">
+            <h3>Documents</h3>
+            <div style="margin-bottom: 15px;">
+                <input type="file" id="edit-newDocuments" multiple accept=".pdf,.jpg,.jpeg,.png" style="display: none;">
+                <button onclick="document.getElementById('edit-newDocuments').click()" type="button" style="background: #10B981; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; font-weight: 600;">
+                    📎 Upload New Document
+                </button>
+            </div>
+            <div id="edit-documents-list">
+                ${reg.documents?.map((doc, i) => {
+                    const fileName = doc.name || `Document ${i + 1}`;
+                    return `
+                    <div class="doc-item-${i}" style="display: flex; align-items: center; gap: 10px; padding: 8px; background: #F3F4F6; border-radius: 5px; margin-bottom: 8px;">
+                        <span style="flex: 1;">${fileName}</span>
+                        <a href="${doc.url}" target="_blank" style="color: #3B82F6; text-decoration: none;">📥 View</a>
+                        <button onclick="deleteEditDocument(${i})" type="button" style="background: #EF4444; color: white; padding: 5px 10px; border: none; border-radius: 5px; cursor: pointer;">🗑️ Delete</button>
+                    </div>
+                    `;
+                }).join('') || '<p style="color: #666;">No documents</p>'}
+            </div>
+        </div>
+
+        <div class="detail-section">
             <h3>Administrative Details</h3>
             <div class="detail-grid">
                 <div class="detail-item">
@@ -546,6 +592,38 @@ function editRegistration(id) {
                         <option value="Pending" ${reg.status === 'Pending' ? 'selected' : ''}>Pending</option>
                         <option value="Approved" ${reg.status === 'Approved' ? 'selected' : ''}>Approved</option>
                         <option value="Rejected" ${reg.status === 'Rejected' ? 'selected' : ''}>Rejected</option>
+                    </select>
+                </div>
+                <div class="detail-item">
+                    <label>Payment Status</label>
+                    <select id="edit-paymentStatus">
+                        <option value="Pending" ${(reg.paymentStatus || 'Pending') === 'Pending' ? 'selected' : ''}>Pending</option>
+                        <option value="Paid" ${reg.paymentStatus === 'Paid' ? 'selected' : ''}>Paid</option>
+                        <option value="Unpaid" ${reg.paymentStatus === 'Unpaid' ? 'selected' : ''}>Unpaid</option>
+                        <option value="Partial" ${reg.paymentStatus === 'Partial' ? 'selected' : ''}>Partial</option>
+                    </select>
+                </div>
+                <div class="detail-item">
+                    <label>Examinee Status</label>
+                    <select id="edit-examineeStatus">
+                        <option value="First-Timer" ${(reg.examineeStatus || 'First-Timer') === 'First-Timer' ? 'selected' : ''}>First-Timer</option>
+                        <option value="Re-Taker" ${reg.examineeStatus === 'Re-Taker' ? 'selected' : ''}>Re-Taker</option>
+                    </select>
+                </div>
+                <div class="detail-item">
+                    <label>Membership Fee</label>
+                    <select id="edit-membershipFee">
+                        <option value="Unpaid" ${(reg.membershipFee || 'Unpaid') === 'Unpaid' ? 'selected' : ''}>Unpaid</option>
+                        <option value="Paid" ${reg.membershipFee === 'Paid' ? 'selected' : ''}>Paid</option>
+                        <option value="Exempted" ${reg.membershipFee === 'Exempted' ? 'selected' : ''}>Exempted</option>
+                    </select>
+                </div>
+                <div class="detail-item">
+                    <label>Incidental Fee</label>
+                    <select id="edit-incidentalFee">
+                        <option value="Unpaid" ${(reg.incidentalFee || 'Unpaid') === 'Unpaid' ? 'selected' : ''}>Unpaid</option>
+                        <option value="Paid" ${reg.incidentalFee === 'Paid' ? 'selected' : ''}>Paid</option>
+                        <option value="Exempted" ${reg.incidentalFee === 'Exempted' ? 'selected' : ''}>Exempted</option>
                     </select>
                 </div>
             </div>
@@ -570,6 +648,8 @@ async function saveChanges() {
     if (!currentEditId) return;
 
     try {
+        const reg = allRegistrations.find(r => r.id === currentEditId);
+        
         const updateData = {
             personalInfo: {
                 surname: document.getElementById('edit-surname').value,
@@ -589,7 +669,12 @@ async function saveChanges() {
             },
             type: document.getElementById('edit-type').value,
             status: document.getElementById('edit-status').value,
+            paymentStatus: document.getElementById('edit-paymentStatus').value,
+            examineeStatus: document.getElementById('edit-examineeStatus').value,
+            membershipFee: document.getElementById('edit-membershipFee').value,
+            incidentalFee: document.getElementById('edit-incidentalFee').value,
             remarks: document.getElementById('edit-remarks').value,
+            documents: reg.documents || [],
             updatedAt: firebase.database.ServerValue.TIMESTAMP
         };
 
@@ -868,6 +953,131 @@ async function clearOldLogs() {
 }
 // ==================== END ACTIVITY LOG MODAL FUNCTIONS ====================
 
+// ==================== FILE UPLOAD/DELETE FUNCTIONS ====================
+// Cloudinary Configuration
+const CLOUDINARY_CLOUD_NAME = 'df17jssg2';
+const CLOUDINARY_UPLOAD_PRESET = 'sple_uploads';
+
+// Delete document from edit modal
+function deleteEditDocument(index) {
+    if (!currentEditId) return;
+    if (!confirm('Delete this document?')) return;
+    
+    const reg = allRegistrations.find(r => r.id === currentEditId);
+    if (!reg || !reg.documents) return;
+    
+    reg.documents.splice(index, 1);
+    
+    // Re-render documents list
+    const docsList = reg.documents.map((doc, i) => {
+        const fileName = doc.name || `Document ${i + 1}`;
+        return `
+        <div class="doc-item-${i}" style="display: flex; align-items: center; gap: 10px; padding: 8px; background: #F3F4F6; border-radius: 5px; margin-bottom: 8px;">
+            <span style="flex: 1;">${fileName}</span>
+            <a href="${doc.url}" target="_blank" style="color: #3B82F6; text-decoration: none;">📥 View</a>
+            <button onclick="deleteEditDocument(${i})" type="button" style="background: #EF4444; color: white; padding: 5px 10px; border: none; border-radius: 5px; cursor: pointer;">🗑️ Delete</button>
+        </div>
+        `;
+    }).join('') || '<p style="color: #666;">No documents</p>';
+    
+    document.getElementById('edit-documents-list').innerHTML = docsList;
+}
+
+// File to base64 helper
+function fileToBase64(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+    });
+}
+
+// Upload to Cloudinary helper
+async function uploadToCloudinary(base64Data, folder, fileName) {
+    const isPDF = base64Data.startsWith('data:application/pdf');
+    const resourceType = isPDF ? 'raw' : 'image';
+    
+    const formData = new FormData();
+    formData.append('file', base64Data);
+    formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+    formData.append('folder', `tsok-registration/${folder}`);
+    formData.append('public_id', fileName);
+    
+    const response = await fetch(
+        `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/${resourceType}/upload`,
+        {
+            method: 'POST',
+            body: formData
+        }
+    );
+    
+    const data = await response.json();
+    return data.secure_url;
+}
+
+// Setup file upload listener
+document.addEventListener('DOMContentLoaded', () => {
+    // This will be set up dynamically when edit modal opens
+});
+
+// Setup file input handler when edit modal opens
+function setupFileUploadHandler() {
+    const fileInput = document.getElementById('edit-newDocuments');
+    if (fileInput) {
+        // Remove old listeners
+        const newFileInput = fileInput.cloneNode(true);
+        fileInput.parentNode.replaceChild(newFileInput, fileInput);
+        
+        newFileInput.addEventListener('change', async (e) => {
+            const files = e.target.files;
+            if (!files.length) return;
+            
+            const reg = allRegistrations.find(r => r.id === currentEditId);
+            if (!reg) return;
+            
+            try {
+                showSuccessMessage('Uploading files...');
+                
+                for (const file of files) {
+                    const base64 = await fileToBase64(file);
+                    const surname = reg.personalInfo?.surname || 'unknown';
+                    const folderName = surname.toLowerCase().replace(/\s+/g, '-');
+                    const randomNum = Math.floor(Math.random() * 10000);
+                    const fileExt = file.name.split('.').pop();
+                    const fileName = `${folderName}-${randomNum}`;
+                    
+                    const url = await uploadToCloudinary(base64, folderName, fileName);
+                    
+                    if (!reg.documents) reg.documents = [];
+                    reg.documents.push({
+                        name: `${fileName}.${fileExt}`,
+                        url: url
+                    });
+                }
+                
+                // Update display
+                editRegistration(currentEditId);
+                showSuccessMessage('Documents uploaded successfully!');
+            } catch (error) {
+                console.error('Upload error:', error);
+                showErrorMessage('Failed to upload documents');
+            }
+            
+            // Reset file input
+            e.target.value = '';
+        });
+    }
+}
+
+// Call setupFileUploadHandler after editRegistration renders
+const originalEditRegistration = editRegistration;
+editRegistration = function(id) {
+    originalEditRegistration(id);
+    setTimeout(setupFileUploadHandler, 100);
+};
+// ==================== END FILE UPLOAD/DELETE FUNCTIONS ====================
+
 // Show messages
 function showSuccessMessage(message) {
     alert(message);
@@ -904,7 +1114,43 @@ style.textContent = `
     .action-export { background: #8B5CF6; color: white; }
     .action-view { background: #F59E0B; color: white; }
     .action-clear_logs { background: #EC4899; color: white; }
+    
+    /* Payment Status Badges */
+    .payment-badge {
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-size: 11px;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+    .payment-pending { background: #FCD34D; color: #78350F; }
+    .payment-paid { background: #10B981; color: white; }
+    .payment-unpaid { background: #EF4444; color: white; }
+    .payment-partial { background: #F59E0B; color: white; }
+    
+    /* Examinee Status Badges */
+    .examinee-badge {
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-size: 11px;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+    .examinee-firsttimer { background: #3B82F6; color: white; }
+    .examinee-retaker { background: #8B5CF6; color: white; }
+    
+    /* Fee Badges */
+    .fee-badge {
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-size: 11px;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+    .fee-paid { background: #10B981; color: white; }
+    .fee-unpaid { background: #EF4444; color: white; }
+    .fee-exempted { background: #6B7280; color: white; }
 `;
 document.head.appendChild(style);
 
-console.log('TSOK Admin Dashboard with Activity Log - TSOK 2026 Officers');
+console.log('TSOK Admin Dashboard with Activity Log - Developed by 2026 TSOK Officers');
