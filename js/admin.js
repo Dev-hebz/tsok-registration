@@ -757,8 +757,12 @@ async function exportToExcel() {
             'Level': reg.educationalBackground?.level || '',
             'Major': reg.educationalBackground?.major || 'N/A',
             'Type': reg.type || 'Member',
-            'Remarks': reg.remarks || '',
             'Status': reg.status || 'Pending',
+            'Payment Status': reg.paymentStatus || 'Pending',
+            'Examinee Status': reg.examineeStatus || 'First-Timer',
+            'Membership Fee': reg.membershipFee || 'Unpaid',
+            'Incidental Fee': reg.incidentalFee || 'Unpaid',
+            'Remarks': reg.remarks || '',
             'Submitted Date': reg.submittedAt ? new Date(reg.submittedAt).toLocaleString() : ''
         }));
 
@@ -780,8 +784,12 @@ async function exportToExcel() {
             { wch: 15 }, // Level
             { wch: 30 }, // Major
             { wch: 20 }, // Type
-            { wch: 30 }, // Remarks
             { wch: 15 }, // Status
+            { wch: 18 }, // Payment Status
+            { wch: 18 }, // Examinee Status
+            { wch: 18 }, // Membership Fee
+            { wch: 18 }, // Incidental Fee
+            { wch: 30 }, // Remarks
             { wch: 25 }  // Submitted Date
         ];
 
@@ -1153,4 +1161,4 @@ style.textContent = `
 `;
 document.head.appendChild(style);
 
-console.log('TSOK Admin Dashboard with Activity Log - Developed by 2026 TSOK Officers');
+console.log('TSOK Admin Dashboard with Activity Log - Developed by Godmisoft');
