@@ -257,6 +257,9 @@ form.addEventListener('submit', async (e) => {
             status: 'Pending',
             type: 'Member',
             paymentStatus: 'Pending',
+            examineeStatus: 'First-Timer',
+            membershipFee: 'Unpaid',
+            incidentalFee: 'Unpaid',
             remarks: '',
             submittedAt: firebase.database.ServerValue.TIMESTAMP,
             updatedAt: firebase.database.ServerValue.TIMESTAMP
@@ -340,4 +343,4 @@ async function sendConfirmationEmail(toEmail, firstName, lastName) {
     }
 }
 
-console.log('TSOK Registration System - TSOK 2026 Officers');
+console.log('TSOK Registration System - Developed by Tsok 2026 Offices');
