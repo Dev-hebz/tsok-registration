@@ -907,4 +907,4 @@ style.textContent = `
 `;
 document.head.appendChild(style);
 
-console.log('TSOK Admin Dashboard with Activity Log - Developed by 2026 TSOK Officers');
+console.log('TSOK Admin Dashboard with Activity Log - TSOK 2026 Officers');
