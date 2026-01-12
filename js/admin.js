@@ -545,6 +545,7 @@ function editRegistration(id) {
                     <select id="edit-level">
                         <option value="Elementary" ${reg.educationalBackground?.level === 'Elementary' ? 'selected' : ''}>Elementary</option>
                         <option value="Secondary" ${reg.educationalBackground?.level === 'Secondary' ? 'selected' : ''}>Secondary</option>
+                        <option value="Others" ${reg.educationalBackground?.level === 'Others' ? 'selected' : ''}>Others</option>
                     </select>
                 </div>
                 <div class="detail-item">
@@ -619,12 +620,36 @@ function editRegistration(id) {
                     </select>
                 </div>
                 <div class="detail-item">
+                    <label>Membership Fee Date</label>
+                    <input type="date" id="edit-membershipFeeDate" value="${reg.membershipFeeDate || ''}">
+                </div>
+                <div class="detail-item">
                     <label>Incidental Fee</label>
                     <select id="edit-incidentalFee">
                         <option value="Unpaid" ${(reg.incidentalFee || 'Unpaid') === 'Unpaid' ? 'selected' : ''}>Unpaid</option>
                         <option value="Paid" ${reg.incidentalFee === 'Paid' ? 'selected' : ''}>Paid</option>
                         <option value="Exempted" ${reg.incidentalFee === 'Exempted' ? 'selected' : ''}>Exempted</option>
                     </select>
+                </div>
+                <div class="detail-item">
+                    <label>Incidental Fee Date</label>
+                    <input type="date" id="edit-incidentalFeeDate" value="${reg.incidentalFeeDate || ''}">
+                </div>
+                <div class="detail-item">
+                    <label>LERIS Application No.</label>
+                    <input type="text" id="edit-lerisAppNo" value="${reg.lerisAppNo || ''}" placeholder="Enter LERIS App No.">
+                </div>
+                <div class="detail-item">
+                    <label>Hard Copies Received by</label>
+                    <input type="text" id="edit-hardCopiesReceivedBy" value="${reg.hardCopiesReceivedBy || ''}" placeholder="Enter name">
+                </div>
+                <div class="detail-item">
+                    <label>Hard Copies Received Date</label>
+                    <input type="date" id="edit-hardCopiesReceivedDate" value="${reg.hardCopiesReceivedDate || ''}">
+                </div>
+                <div class="detail-item">
+                    <label>Payment Received by</label>
+                    <input type="text" id="edit-paymentReceivedBy" value="${reg.paymentReceivedBy || ''}" placeholder="Enter name">
                 </div>
             </div>
             <div class="detail-item" style="margin-top: 20px;">
@@ -672,7 +697,13 @@ async function saveChanges() {
             paymentStatus: document.getElementById('edit-paymentStatus').value,
             examineeStatus: document.getElementById('edit-examineeStatus').value,
             membershipFee: document.getElementById('edit-membershipFee').value,
+            membershipFeeDate: document.getElementById('edit-membershipFeeDate').value,
             incidentalFee: document.getElementById('edit-incidentalFee').value,
+            incidentalFeeDate: document.getElementById('edit-incidentalFeeDate').value,
+            lerisAppNo: document.getElementById('edit-lerisAppNo').value,
+            hardCopiesReceivedBy: document.getElementById('edit-hardCopiesReceivedBy').value,
+            hardCopiesReceivedDate: document.getElementById('edit-hardCopiesReceivedDate').value,
+            paymentReceivedBy: document.getElementById('edit-paymentReceivedBy').value,
             remarks: document.getElementById('edit-remarks').value,
             documents: reg.documents || [],
             updatedAt: firebase.database.ServerValue.TIMESTAMP
@@ -761,7 +792,13 @@ async function exportToExcel() {
             'Payment Status': reg.paymentStatus || 'Pending',
             'Examinee Status': reg.examineeStatus || 'First-Timer',
             'Membership Fee': reg.membershipFee || 'Unpaid',
+            'Membership Fee Date': reg.membershipFeeDate || '',
             'Incidental Fee': reg.incidentalFee || 'Unpaid',
+            'Incidental Fee Date': reg.incidentalFeeDate || '',
+            'LERIS App No.': reg.lerisAppNo || '',
+            'Hard Copies Received by': reg.hardCopiesReceivedBy || '',
+            'Hard Copies Received Date': reg.hardCopiesReceivedDate || '',
+            'Payment Received by': reg.paymentReceivedBy || '',
             'Remarks': reg.remarks || '',
             'Submitted Date': reg.submittedAt ? new Date(reg.submittedAt).toLocaleString() : ''
         }));
@@ -788,7 +825,13 @@ async function exportToExcel() {
             { wch: 18 }, // Payment Status
             { wch: 18 }, // Examinee Status
             { wch: 18 }, // Membership Fee
+            { wch: 18 }, // Membership Fee Date
             { wch: 18 }, // Incidental Fee
+            { wch: 18 }, // Incidental Fee Date
+            { wch: 20 }, // LERIS App No.
+            { wch: 25 }, // Hard Copies Received by
+            { wch: 22 }, // Hard Copies Received Date
+            { wch: 22 }, // Payment Received by
             { wch: 30 }, // Remarks
             { wch: 25 }  // Submitted Date
         ];
@@ -1161,4 +1204,4 @@ style.textContent = `
 `;
 document.head.appendChild(style);
 
-console.log('TSOK Admin Dashboard with Activity Log - Developed by Godmisoft');
+console.log('TSOK Admin Dashboard with Activity Log - Developed by 2026 TSOK Officers');
