@@ -247,10 +247,26 @@ function updateStats() {
     const total = allRegistrations.length;
     const members = allRegistrations.filter(r => r.type === 'Member').length;
     const associates = allRegistrations.filter(r => r.type === 'Associate Member').length;
+    
+    // Examinee Status Stats
+    const firstTimer = allRegistrations.filter(r => r.examineeStatus === 'First-Timer' || !r.examineeStatus).length;
+    const retaker = allRegistrations.filter(r => r.examineeStatus === 'Re-Taker').length;
+    
+    // Payment Status Stats
+    const pending = allRegistrations.filter(r => r.paymentStatus === 'Pending' || !r.paymentStatus).length;
+    const paid = allRegistrations.filter(r => r.paymentStatus === 'Paid').length;
+    const partial = allRegistrations.filter(r => r.paymentStatus === 'Partial').length;
+    const unpaid = allRegistrations.filter(r => r.paymentStatus === 'Unpaid').length;
 
     document.getElementById('totalRegistrations').textContent = total;
     document.getElementById('totalMembers').textContent = members;
     document.getElementById('totalAssociates').textContent = associates;
+    document.getElementById('totalFirstTimer').textContent = firstTimer;
+    document.getElementById('totalRetaker').textContent = retaker;
+    document.getElementById('totalPending').textContent = pending;
+    document.getElementById('totalPaid').textContent = paid;
+    document.getElementById('totalPartial').textContent = partial;
+    document.getElementById('totalUnpaid').textContent = unpaid;
 }
 
 // Display registrations in table
