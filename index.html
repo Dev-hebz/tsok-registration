@@ -123,9 +123,39 @@
                         </div>
                     </div>
 
+                    <!-- Additional Information -->
+                    <div class="form-section">
+                        <h3>Additional Information</h3>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="tshirtSize">T-Shirt Size <span class="required">*</span></label>
+                                <select id="tshirtSize" name="tshirtSize" required>
+                                    <option value="">Select T-Shirt Size</option>
+                                    <option value="XS">XS – Extra Small</option>
+                                    <option value="S">S – Small</option>
+                                    <option value="M">M – Medium</option>
+                                    <option value="L">L – Large</option>
+                                    <option value="XL">XL – Extra Large</option>
+                                    <option value="2XL">2XL – Double Extra Large</option>
+                                    <option value="3XL">3XL – Triple Extra Large</option>
+                                    <option value="4XL">4XL</option>
+                                    <option value="5XL">5XL</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="examineeStatus">Examinee Status <span class="required">*</span></label>
+                                <select id="examineeStatus" name="examineeStatus" required>
+                                    <option value="">Select Examinee Status</option>
+                                    <option value="First-Timer">First-Timer</option>
+                                    <option value="Re-Taker">Re-Taker</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Document Upload -->
                     <div class="form-section">
-                        <h3>Upload Documents (PDF, PNG, JPG) <span class="required">*</span></h3>
+                        <h3>Upload Documents TOR, Diplona, Teaching Cert/TOR of max 18units, Birth Cert (PSA/NSO), Passport, Formal Photo (PDF, PNG, JPG) <span class="required">*</span></h3>
                         <div class="upload-container">
                             <input type="file" id="documents" name="documents" accept=".pdf,.png,.jpg,.jpeg" multiple required>
                             <label for="documents" class="upload-label">
