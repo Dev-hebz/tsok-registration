@@ -581,6 +581,20 @@ function editRegistration(id) {
             <h3>Administrative Details</h3>
             <div class="detail-grid">
                 <div class="detail-item">
+                    <label>T-Shirt Size</label>
+                    <select id="edit-tshirtSize">
+                        <option value="XS" ${reg.tshirtSize === 'XS' ? 'selected' : ''}>XS – Extra Small</option>
+                        <option value="S" ${reg.tshirtSize === 'S' ? 'selected' : ''}>S – Small</option>
+                        <option value="M" ${reg.tshirtSize === 'M' ? 'selected' : ''}>M – Medium</option>
+                        <option value="L" ${reg.tshirtSize === 'L' ? 'selected' : ''}>L – Large</option>
+                        <option value="XL" ${reg.tshirtSize === 'XL' ? 'selected' : ''}>XL – Extra Large</option>
+                        <option value="2XL" ${reg.tshirtSize === '2XL' ? 'selected' : ''}>2XL – Double Extra Large</option>
+                        <option value="3XL" ${reg.tshirtSize === '3XL' ? 'selected' : ''}>3XL – Triple Extra Large</option>
+                        <option value="4XL" ${reg.tshirtSize === '4XL' ? 'selected' : ''}>4XL</option>
+                        <option value="5XL" ${reg.tshirtSize === '5XL' ? 'selected' : ''}>5XL</option>
+                    </select>
+                </div>
+                <div class="detail-item">
                     <label>Type</label>
                     <select id="edit-type">
                         <option value="Member" ${reg.type === 'Member' ? 'selected' : ''}>Member</option>
@@ -692,6 +706,7 @@ async function saveChanges() {
                 level: document.getElementById('edit-level').value,
                 major: document.getElementById('edit-major').value
             },
+            tshirtSize: document.getElementById('edit-tshirtSize').value,
             type: document.getElementById('edit-type').value,
             status: document.getElementById('edit-status').value,
             paymentStatus: document.getElementById('edit-paymentStatus').value,
@@ -787,6 +802,7 @@ async function exportToExcel() {
             'Degree': reg.educationalBackground?.degree || '',
             'Level': reg.educationalBackground?.level || '',
             'Major': reg.educationalBackground?.major || 'N/A',
+            'T-Shirt Size': reg.tshirtSize || '',
             'Type': reg.type || 'Member',
             'Status': reg.status || 'Pending',
             'Payment Status': reg.paymentStatus || 'Pending',
@@ -820,6 +836,7 @@ async function exportToExcel() {
             { wch: 35 }, // Degree
             { wch: 15 }, // Level
             { wch: 30 }, // Major
+            { wch: 15 }, // T-Shirt Size
             { wch: 20 }, // Type
             { wch: 15 }, // Status
             { wch: 18 }, // Payment Status
@@ -864,10 +881,20 @@ function setupSearch() {
             const fullName = `${reg.personalInfo?.surname || ''} ${reg.personalInfo?.firstName || ''} ${reg.personalInfo?.middleName || ''}`.toLowerCase();
             const email = (reg.contactInfo?.email || '').toLowerCase();
             const contact = (reg.contactInfo?.contactNumber || '').toLowerCase();
+            const level = (reg.educationalBackground?.level || '').toLowerCase();
+            const type = (reg.type || '').toLowerCase();
+            const status = (reg.status || '').toLowerCase();
+            const payment = (reg.paymentStatus || '').toLowerCase();
+            const examinee = (reg.examineeStatus || '').toLowerCase();
             
             return fullName.includes(searchTerm) || 
                    email.includes(searchTerm) || 
-                   contact.includes(searchTerm);
+                   contact.includes(searchTerm) ||
+                   level.includes(searchTerm) ||
+                   type.includes(searchTerm) ||
+                   status.includes(searchTerm) ||
+                   payment.includes(searchTerm) ||
+                   examinee.includes(searchTerm);
         });
         displayRegistrations(filtered);
     });
