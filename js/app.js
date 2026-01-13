@@ -202,6 +202,8 @@ form.addEventListener('submit', async (e) => {
         const degree = formData.get('degree');
         const level = formData.get('level');
         const major = formData.get('major');
+        const tshirtSize = formData.get('tshirtSize');
+        const examineeStatus = formData.get('examineeStatus');
 
         // Create folder name from surname
         const folderName = surname.toLowerCase().replace(/\s+/g, '-');
@@ -252,12 +254,13 @@ form.addEventListener('submit', async (e) => {
                 level,
                 major: level === 'Secondary' ? major : null
             },
+            tshirtSize,
+            examineeStatus,
             documents: uploadedDocs,
             signature: signatureUrl,
             status: 'Pending',
             type: 'Member',
             paymentStatus: 'Pending',
-            examineeStatus: 'First-Timer',
             membershipFee: 'Unpaid',
             incidentalFee: 'Unpaid',
             remarks: '',
@@ -343,4 +346,4 @@ async function sendConfirmationEmail(toEmail, firstName, lastName) {
     }
 }
 
-console.log('TSOK Registration System - Developed by Tsok 2026 Offices');
+console.log('TSOK Registration System - Developed by 2026 TSOK Officers');
