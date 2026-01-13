@@ -583,6 +583,7 @@ function editRegistration(id) {
                 <div class="detail-item">
                     <label>T-Shirt Size</label>
                     <select id="edit-tshirtSize">
+                        <option value="" ${!reg.tshirtSize ? 'selected' : ''}>-- Not Set --</option>
                         <option value="XS" ${reg.tshirtSize === 'XS' ? 'selected' : ''}>XS – Extra Small</option>
                         <option value="S" ${reg.tshirtSize === 'S' ? 'selected' : ''}>S – Small</option>
                         <option value="M" ${reg.tshirtSize === 'M' ? 'selected' : ''}>M – Medium</option>
