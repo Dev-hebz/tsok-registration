@@ -209,6 +209,13 @@ form.addEventListener('submit', async (e) => {
         const folderName = surname.toLowerCase().replace(/\s+/g, '-');
         const timestamp = Date.now();
         const randomNum = Math.floor(Math.random() * 10000);
+        const currentYear = new Date().getFullYear();
+        
+        // Create clean filename: Surname-FirstName-MiddleName-Year
+        const cleanSurname = surname.replace(/\s+/g, '');
+        const cleanFirstName = firstName.replace(/\s+/g, '');
+        const cleanMiddleName = middleName.replace(/\s+/g, '');
+        const baseFileName = `${cleanSurname}-${cleanFirstName}-${cleanMiddleName}-${currentYear}`;
 
         // Upload documents to Cloudinary
         const uploadedDocs = [];
@@ -217,7 +224,7 @@ form.addEventListener('submit', async (e) => {
             const base64 = await fileToBase64(file);
             
             const fileExt = file.name.split('.').pop().toLowerCase();
-            const fileName = `${folderName}-${randomNum + i}`;
+            const fileName = selectedFiles.length > 1 ? `${baseFileName}-${i + 1}` : baseFileName;
             
             const url = await uploadToCloudinary(base64, folderName, fileName);
             uploadedDocs.push({
@@ -228,7 +235,7 @@ form.addEventListener('submit', async (e) => {
 
         // Upload signature to Cloudinary
         const signatureBase64 = signaturePad.toDataURL();
-        const signatureFileName = `${folderName}-signature`;
+        const signatureFileName = `${baseFileName}-signature`;
         
         const signatureUrl = await uploadToCloudinary(
             signatureBase64,
@@ -346,4 +353,4 @@ async function sendConfirmationEmail(toEmail, firstName, lastName) {
     }
 }
 
-console.log('TSOK Registration System - Developed by 2026 TSOK Officers');
+console.log('TSOK Registration System - Developed by Godmisoft');
