@@ -18,9 +18,9 @@ const CLOUDINARY_CLOUD_NAME = 'df17jssg2';
 const CLOUDINARY_UPLOAD_PRESET = 'sple_uploads';
 
 // EmailJS Configuration
-const EMAILJS_PUBLIC_KEY = 'DacF66ft39K859Y5s';
-const EMAILJS_SERVICE_ID = 'service_6457cjo';
-const EMAILJS_TEMPLATE_ID = 'template_9ygnhpn';
+const EMAILJS_PUBLIC_KEY = 'BOcx-o_GvJEVbp-dL';
+const EMAILJS_SERVICE_ID = 'service_8lub6jr';
+const EMAILJS_TEMPLATE_ID = 'template_jq2ksu9';
 
 // Initialize EmailJS
 if (typeof emailjs !== 'undefined' && EMAILJS_PUBLIC_KEY !== 'YOUR_EMAILJS_PUBLIC_KEY') {
@@ -329,7 +329,7 @@ async function sendConfirmationEmail(toEmail, firstName, lastName) {
             day: 'numeric'
         }),
         from_name: 'TSOK Officers 2026',
-        reply_to: 'tsokkuwait@gmail.com'
+        reply_to: 'tsokuwait@gmail.com'
     };
 
     try {
