@@ -1182,13 +1182,29 @@ function setupFileUploadHandler() {
             try {
                 showSuccessMessage('Uploading files...');
                 
-                for (const file of files) {
+                // Get current year
+                const currentYear = new Date().getFullYear();
+                
+                // Create clean filename: Surname-FirstName-MiddleName-Year
+                const surname = reg.personalInfo?.surname || 'unknown';
+                const firstName = reg.personalInfo?.firstName || '';
+                const middleName = reg.personalInfo?.middleName || '';
+                
+                const cleanSurname = surname.replace(/\s+/g, '');
+                const cleanFirstName = firstName.replace(/\s+/g, '');
+                const cleanMiddleName = middleName.replace(/\s+/g, '');
+                const baseFileName = `${cleanSurname}-${cleanFirstName}-${cleanMiddleName}-${currentYear}`;
+                
+                const folderName = surname.toLowerCase().replace(/\s+/g, '-');
+                
+                // Get current document count for numbering
+                const currentCount = reg.documents ? reg.documents.length : 0;
+                
+                for (let i = 0; i < files.length; i++) {
+                    const file = files[i];
                     const base64 = await fileToBase64(file);
-                    const surname = reg.personalInfo?.surname || 'unknown';
-                    const folderName = surname.toLowerCase().replace(/\s+/g, '-');
-                    const randomNum = Math.floor(Math.random() * 10000);
                     const fileExt = file.name.split('.').pop();
-                    const fileName = `${folderName}-${randomNum}`;
+                    const fileName = files.length > 1 ? `${baseFileName}-${currentCount + i + 1}` : `${baseFileName}-${currentCount + 1}`;
                     
                     const url = await uploadToCloudinary(base64, folderName, fileName);
                     
@@ -1296,4 +1312,4 @@ style.textContent = `
 `;
 document.head.appendChild(style);
 
-console.log('TSOK Admin Dashboard with Activity Log - Developed by TSOK 2026 Officers');
+console.log('TSOK Admin Dashboard with Activity Log - Developed by TSOK 2026 OPfficers');
