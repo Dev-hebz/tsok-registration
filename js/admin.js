@@ -682,6 +682,36 @@ function editRegistration(id) {
                     <label>Payment Received by</label>
                     <input type="text" id="edit-paymentReceivedBy" value="${reg.paymentReceivedBy || ''}" placeholder="Enter name">
                 </div>
+                <div class="detail-item">
+                    <label>LERIS Status</label>
+                    <select id="edit-lerisStatus">
+                        <option value="" ${!reg.lerisStatus ? 'selected' : ''}>-- Not Set --</option>
+                        <option value="Pending" ${reg.lerisStatus === 'Pending' ? 'selected' : ''}>Pending</option>
+                        <option value="Cancelled" ${reg.lerisStatus === 'Cancelled' ? 'selected' : ''}>Cancelled</option>
+                        <option value="Denied" ${reg.lerisStatus === 'Denied' ? 'selected' : ''}>Denied</option>
+                        <option value="Approved" ${reg.lerisStatus === 'Approved' ? 'selected' : ''}>Approved</option>
+                    </select>
+                </div>
+                <div class="detail-item">
+                    <label>ID Issue Status</label>
+                    <input type="text" id="edit-idIssueStatus" value="${reg.idIssueStatus || ''}" placeholder="Enter ID issue status">
+                </div>
+                <div class="detail-item">
+                    <label>Mem Cert Issue Status</label>
+                    <input type="text" id="edit-memCertIssueStatus" value="${reg.memCertIssueStatus || ''}" placeholder="Enter membership cert status">
+                </div>
+                <div class="detail-item">
+                    <label>T-shirt Issue Status</label>
+                    <input type="text" id="edit-tshirtIssueStatus" value="${reg.tshirtIssueStatus || ''}" placeholder="Enter t-shirt issue status">
+                </div>
+                <div class="detail-item">
+                    <label>SPLE Status</label>
+                    <input type="text" id="edit-spleStatus" value="${reg.spleStatus || ''}" placeholder="Enter SPLE status">
+                </div>
+                <div class="detail-item">
+                    <label>SPIMS Status</label>
+                    <input type="text" id="edit-spimsStatus" value="${reg.spimsStatus || ''}" placeholder="Enter SPIMS status">
+                </div>
             </div>
             <div class="detail-item" style="margin-top: 20px;">
                 <label>Remarks</label>
@@ -736,6 +766,12 @@ async function saveChanges() {
             hardCopiesReceivedBy: document.getElementById('edit-hardCopiesReceivedBy').value,
             hardCopiesReceivedDate: document.getElementById('edit-hardCopiesReceivedDate').value,
             paymentReceivedBy: document.getElementById('edit-paymentReceivedBy').value,
+            lerisStatus: document.getElementById('edit-lerisStatus').value,
+            idIssueStatus: document.getElementById('edit-idIssueStatus').value,
+            memCertIssueStatus: document.getElementById('edit-memCertIssueStatus').value,
+            tshirtIssueStatus: document.getElementById('edit-tshirtIssueStatus').value,
+            spleStatus: document.getElementById('edit-spleStatus').value,
+            spimsStatus: document.getElementById('edit-spimsStatus').value,
             remarks: document.getElementById('edit-remarks').value,
             documents: reg.documents || [],
             updatedAt: firebase.database.ServerValue.TIMESTAMP
@@ -832,6 +868,12 @@ async function exportToExcel() {
             'Hard Copies Received by': reg.hardCopiesReceivedBy || '',
             'Hard Copies Received Date': reg.hardCopiesReceivedDate || '',
             'Payment Received by': reg.paymentReceivedBy || '',
+            'LERIS Status': reg.lerisStatus || '',
+            'ID Issue Status': reg.idIssueStatus || '',
+            'Mem Cert Issue Status': reg.memCertIssueStatus || '',
+            'T-shirt Issue Status': reg.tshirtIssueStatus || '',
+            'SPLE Status': reg.spleStatus || '',
+            'SPIMS Status': reg.spimsStatus || '',
             'Remarks': reg.remarks || '',
             'Submitted Date': reg.submittedAt ? new Date(reg.submittedAt).toLocaleString() : ''
         }));
@@ -866,6 +908,12 @@ async function exportToExcel() {
             { wch: 25 }, // Hard Copies Received by
             { wch: 22 }, // Hard Copies Received Date
             { wch: 22 }, // Payment Received by
+            { wch: 18 }, // LERIS Status
+            { wch: 20 }, // ID Issue Status
+            { wch: 25 }, // Mem Cert Issue Status
+            { wch: 22 }, // T-shirt Issue Status
+            { wch: 18 }, // SPLE Status
+            { wch: 18 }, // SPIMS Status
             { wch: 30 }, // Remarks
             { wch: 25 }  // Submitted Date
         ];
@@ -1248,4 +1296,4 @@ style.textContent = `
 `;
 document.head.appendChild(style);
 
-console.log('TSOK Admin Dashboard with Activity Log - Developed by 2026 TSOK Officers');
+console.log('TSOK Admin Dashboard with Activity Log - Developed by TSOK 2026 Officers');
