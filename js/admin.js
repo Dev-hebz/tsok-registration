@@ -335,6 +335,13 @@ function displayRegistrations(registrations) {
                             </svg>
                             Edit
                         </button>
+                        <button onclick="openEmailModal('${reg.id}')" class="btn-email" title="Send Email">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                                <polyline points="22,6 12,13 2,6"></polyline>
+                            </svg>
+                            Email
+                        </button>
                         <button onclick="deleteRegistration('${reg.id}', '${fullName}')" class="btn-delete">
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                 <polyline points="3 6 5 6 21 6"></polyline>
@@ -1312,4 +1319,234 @@ style.textContent = `
 `;
 document.head.appendChild(style);
 
-console.log('TSOK Admin Dashboard with Activity Log - Developed by TSOK 2026 OPfficers');
+// ==================== EMAIL MODAL FUNCTIONS ====================
+// EmailJS Configuration (same as app.js)
+const EMAILJS_PUBLIC_KEY = 'BOcx-o_GvJEVbp-dL';
+const EMAILJS_SERVICE_ID = 'service_8lub6jr';
+const EMAILJS_TEMPLATE_ID_ADMIN = 'template_jq2ksu9'; // You can use different template or same
+
+// Initialize EmailJS if not already initialized
+if (typeof emailjs !== 'undefined' && !emailjs.init) {
+    emailjs.init(EMAILJS_PUBLIC_KEY);
+}
+
+let currentEmailRecipient = null;
+
+// Open Email Modal
+function openEmailModal(registrationId) {
+    const reg = allRegistrations.find(r => r.id === registrationId);
+    if (!reg) return;
+    
+    const fullName = `${reg.personalInfo?.firstName || ''} ${reg.personalInfo?.lastName || reg.personalInfo?.surname || ''}`.trim();
+    const email = reg.contactInfo?.email || '';
+    
+    if (!email) {
+        alert('No email address found for this registration.');
+        return;
+    }
+    
+    currentEmailRecipient = {
+        id: registrationId,
+        name: fullName,
+        email: email
+    };
+    
+    // Create modal HTML
+    const modalHTML = `
+        <div id="emailModal" class="modal" style="display: flex;">
+            <div class="modal-content" style="max-width: 700px; width: 90%;">
+                <div class="modal-header">
+                    <h2>📧 Send Email</h2>
+                    <span class="close" onclick="closeEmailModal()">&times;</span>
+                </div>
+                <div class="modal-body">
+                    <div style="background: #F3F4F6; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                        <p style="margin: 0; color: #374151;"><strong>To:</strong> ${fullName}</p>
+                        <p style="margin: 5px 0 0 0; color: #6B7280; font-size: 14px;">${email}</p>
+                    </div>
+                    
+                    <div class="form-group" style="margin-bottom: 20px;">
+                        <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #374151;">Subject:</label>
+                        <input type="text" id="emailSubject" 
+                               style="width: 100%; padding: 12px; border: 1px solid #D1D5DB; border-radius: 8px; font-size: 15px;"
+                               placeholder="Enter email subject"
+                               value="TSOK Registration Update">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #374151;">Message:</label>
+                        <textarea id="emailBody" rows="12" 
+                                  style="width: 100%; padding: 12px; border: 1px solid #D1D5DB; border-radius: 8px; font-size: 15px; font-family: inherit; resize: vertical;"
+                                  placeholder="Type your message here...">Dear ${fullName},
+
+Greetings from TSOK!
+
+
+
+For any questions, please contact us at tsokuwait@gmail.com.
+
+Best regards,
+TSOK Officers 2026</textarea>
+                    </div>
+                    
+                    <div id="emailStatus" style="margin-top: 15px; padding: 10px; border-radius: 6px; display: none;"></div>
+                </div>
+                <div class="modal-footer">
+                    <button onclick="closeEmailModal()" class="btn-secondary" style="padding: 12px 24px; background: #6B7280; color: white; border: none; border-radius: 8px; font-size: 15px; cursor: pointer; margin-right: 10px;">Cancel</button>
+                    <button onclick="sendEmailToUser()" class="btn-primary" style="padding: 12px 24px; background: #2E4C96; color: white; border: none; border-radius: 8px; font-size: 15px; cursor: pointer;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right: 6px;">
+                            <line x1="22" y1="2" x2="11" y2="13"></line>
+                            <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                        </svg>
+                        Send Email
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Remove existing modal if any
+    const existingModal = document.getElementById('emailModal');
+    if (existingModal) {
+        existingModal.remove();
+    }
+    
+    // Add modal to body
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+    
+    // Focus on subject field
+    setTimeout(() => {
+        document.getElementById('emailSubject').focus();
+    }, 100);
+}
+
+// Close Email Modal
+function closeEmailModal() {
+    const modal = document.getElementById('emailModal');
+    if (modal) {
+        modal.remove();
+    }
+    currentEmailRecipient = null;
+}
+
+// Send Email to User
+async function sendEmailToUser() {
+    if (!currentEmailRecipient) return;
+    
+    const subject = document.getElementById('emailSubject').value.trim();
+    const body = document.getElementById('emailBody').value.trim();
+    const statusDiv = document.getElementById('emailStatus');
+    const sendButton = event.target;
+    
+    // Validation
+    if (!subject) {
+        statusDiv.style.display = 'block';
+        statusDiv.style.background = '#FEF2F2';
+        statusDiv.style.color = '#DC2626';
+        statusDiv.textContent = '⚠️ Please enter a subject';
+        return;
+    }
+    
+    if (!body) {
+        statusDiv.style.display = 'block';
+        statusDiv.style.background = '#FEF2F2';
+        statusDiv.style.color = '#DC2626';
+        statusDiv.textContent = '⚠️ Please enter a message';
+        return;
+    }
+    
+    // Show sending status
+    sendButton.disabled = true;
+    sendButton.innerHTML = '<span style="display: inline-block; animation: spin 1s linear infinite;">⏳</span> Sending...';
+    statusDiv.style.display = 'block';
+    statusDiv.style.background = '#FEF9C3';
+    statusDiv.style.color = '#854D0E';
+    statusDiv.textContent = '📤 Sending email...';
+    
+    try {
+        // Prepare email parameters
+        const templateParams = {
+            to_email: currentEmailRecipient.email,
+            to_name: currentEmailRecipient.name,
+            subject: subject,
+            message: body,
+            from_name: 'TSOK Officers 2026',
+            reply_to: 'tsokuwait@gmail.com'
+        };
+        
+        // Send via EmailJS
+        const response = await emailjs.send(
+            EMAILJS_SERVICE_ID,
+            EMAILJS_TEMPLATE_ID_ADMIN,
+            templateParams
+        );
+        
+        console.log('Email sent successfully!', response);
+        
+        // Show success
+        statusDiv.style.background = '#ECFDF5';
+        statusDiv.style.color = '#065F46';
+        statusDiv.textContent = '✅ Email sent successfully to ' + currentEmailRecipient.email;
+        
+        sendButton.innerHTML = '✅ Email Sent!';
+        
+        // Log activity
+        await logActivity('email_sent', currentAdmin?.email || 'admin', {
+            recipient: currentEmailRecipient.email,
+            subject: subject
+        });
+        
+        // Close modal after 2 seconds
+        setTimeout(() => {
+            closeEmailModal();
+        }, 2000);
+        
+    } catch (error) {
+        console.error('Email sending failed:', error);
+        
+        // Show error
+        statusDiv.style.background = '#FEF2F2';
+        statusDiv.style.color = '#DC2626';
+        statusDiv.textContent = '❌ Failed to send email. Please try again.';
+        
+        sendButton.disabled = false;
+        sendButton.innerHTML = `
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right: 6px;">
+                <line x1="22" y1="2" x2="11" y2="13"></line>
+                <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+            </svg>
+            Send Email
+        `;
+    }
+}
+
+// Add CSS for spin animation
+const spinStyle = document.createElement('style');
+spinStyle.textContent = `
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    .btn-email {
+        background: #8B5CF6;
+        color: white;
+        padding: 8px 12px;
+        border: none;
+        border-radius: 6px;
+        font-size: 13px;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        transition: background 0.2s;
+    }
+    .btn-email:hover {
+        background: #7C3AED;
+    }
+    .btn-email svg {
+        flex-shrink: 0;
+    }
+`;
+document.head.appendChild(spinStyle);
+
+console.log('TSOK Admin Dashboard with Activity Log - Developed by TSOK 2026 Offices');
