@@ -1320,10 +1320,14 @@ style.textContent = `
 document.head.appendChild(style);
 
 // ==================== EMAIL MODAL FUNCTIONS ====================
-// EmailJS Configuration (same as app.js)
+// EmailJS Configuration
 const EMAILJS_PUBLIC_KEY = 'BOcx-o_GvJEVbp-dL';
 const EMAILJS_SERVICE_ID = 'service_8lub6jr';
-const EMAILJS_TEMPLATE_ID_ADMIN = 'template_jq2ksu9';
+const EMAILJS_TEMPLATE_ID_ADMIN = 'template_ih93cbe'; // Admin Reply Template
+
+// NOTE: This template should have:
+// Subject: {{subject}}
+// Body: {{message}}
 
 // Initialize EmailJS when script loads
 (function() {
