@@ -1323,12 +1323,17 @@ document.head.appendChild(style);
 // EmailJS Configuration (same as app.js)
 const EMAILJS_PUBLIC_KEY = 'BOcx-o_GvJEVbp-dL';
 const EMAILJS_SERVICE_ID = 'service_8lub6jr';
-const EMAILJS_TEMPLATE_ID_ADMIN = 'template_jq2ksu9'; // You can use different template or same
+const EMAILJS_TEMPLATE_ID_ADMIN = 'template_jq2ksu9';
 
-// Initialize EmailJS if not already initialized
-if (typeof emailjs !== 'undefined' && !emailjs.init) {
-    emailjs.init(EMAILJS_PUBLIC_KEY);
-}
+// Initialize EmailJS when script loads
+(function() {
+    if (typeof emailjs !== 'undefined') {
+        emailjs.init(EMAILJS_PUBLIC_KEY);
+        console.log('EmailJS initialized successfully');
+    } else {
+        console.error('EmailJS not loaded');
+    }
+})();
 
 let currentEmailRecipient = null;
 
@@ -1549,4 +1554,4 @@ spinStyle.textContent = `
 `;
 document.head.appendChild(spinStyle);
 
-console.log('TSOK Admin Dashboard with Activity Log - Developed by TSOK 2026 Offices');
+console.log('TSOK Admin Dashboard with Activity Log - Developed by TSOK 2026 Officers');
