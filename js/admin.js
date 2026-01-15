@@ -1495,11 +1495,19 @@ async function sendEmailToUser() {
         
         sendButton.innerHTML = '✅ Email Sent!';
         
-        // Log activity
-        await logActivity('email_sent', currentAdmin?.email || 'admin', {
-            recipient: currentEmailRecipient.email,
-            subject: subject
-        });
+        // Log activity (optional - only if logActivity function exists)
+        try {
+            const currentUser = firebase.auth().currentUser;
+            const adminEmail = currentUser ? currentUser.email : 'admin';
+            if (typeof logActivity === 'function') {
+                await logActivity('email_sent', adminEmail, {
+                    recipient: currentEmailRecipient.email,
+                    subject: subject
+                });
+            }
+        } catch (logError) {
+            console.log('Activity logging skipped:', logError);
+        }
         
         // Close modal after 2 seconds
         setTimeout(() => {
