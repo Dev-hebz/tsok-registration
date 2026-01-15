@@ -974,6 +974,23 @@ function setupSearch() {
 
 // ==================== ACTIVITY LOG MODAL FUNCTIONS ====================
 // Show Activity Log Modal
+// Format activity details based on action type
+function formatActivityDetails(log) {
+    const action = log.action.toLowerCase();
+    const details = log.details || {};
+    
+    switch(action) {
+        case 'email_sent':
+            return `<strong>To:</strong> ${details.recipient || '-'}<br><small style="color: #666;">Subject: ${details.subject || '-'}</small>`;
+        case 'view':
+        case 'edit':
+        case 'delete':
+            return details.registrationName || '-';
+        default:
+            return details.message || details.registrationName || '-';
+    }
+}
+
 async function showActivityLog() {
     const snapshot = await database.ref('activityLogs').orderByChild('timestamp').limitToLast(100).once('value');
     const logs = [];
@@ -987,7 +1004,7 @@ async function showActivityLog() {
             <td style="padding: 12px; border-bottom: 1px solid #E5E7EB;">${log.date}</td>
             <td style="padding: 12px; border-bottom: 1px solid #E5E7EB;"><strong>${log.adminName}</strong><br><small style="color: #666;">${log.adminEmail}</small></td>
             <td style="padding: 12px; border-bottom: 1px solid #E5E7EB;"><span class="action-badge action-${log.action.toLowerCase()}">${log.action}</span></td>
-            <td style="padding: 12px; border-bottom: 1px solid #E5E7EB;">${log.details.registrationName || log.details.message || '-'}</td>
+            <td style="padding: 12px; border-bottom: 1px solid #E5E7EB;">${formatActivityDetails(log)}</td>
             <td style="padding: 12px; border-bottom: 1px solid #E5E7EB;">
                 <strong>${log.location.ip.city}, ${log.location.ip.country}</strong><br>
                 <small style="color: #666;">IP: ${log.location.ip.ip}</small>
@@ -1046,12 +1063,22 @@ async function exportActivityLog() {
     
     snapshot.forEach((child) => {
         const log = child.val();
+        const action = log.action.toLowerCase();
+        let detailsText = '-';
+        
+        // Format details based on action type
+        if (action === 'email_sent' && log.details.recipient) {
+            detailsText = `To: ${log.details.recipient} | Subject: ${log.details.subject || '-'}`;
+        } else {
+            detailsText = log.details.registrationName || log.details.message || '-';
+        }
+        
         logs.push({
             'Date & Time': log.date,
             'Admin Name': log.adminName,
             'Admin Email': log.adminEmail,
             'Action': log.action,
-            'Details': log.details.registrationName || log.details.message || '-',
+            'Details': detailsText,
             'City': log.location.ip.city,
             'Country': log.location.ip.country,
             'IP Address': log.location.ip.ip,
