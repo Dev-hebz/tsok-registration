@@ -1528,10 +1528,8 @@ async function sendEmailToUser() {
         
         // Log activity (optional - only if logActivity function exists)
         try {
-            const currentUser = firebase.auth().currentUser;
-            const adminEmail = currentUser ? currentUser.email : 'admin';
             if (typeof logActivity === 'function') {
-                await logActivity('email_sent', adminEmail, {
+                await logActivity('email_sent', {
                     recipient: currentEmailRecipient.email,
                     subject: subject
                 });
