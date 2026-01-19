@@ -18,15 +18,27 @@ const auth = firebase.auth();
 let allTransactions = [];
 let currentUser = null;
 
-// ==================== AUTHENTICATION CHECK ====================
+// ==================== AUTHENTICATION & ACCESS CHECK ====================
 auth.onAuthStateChanged((user) => {
     if (!user) {
-        // Not logged in, redirect to admin login
+        // Not logged in - redirect to admin login
+        alert('⚠️ Access Denied!\n\nPlease login to admin dashboard first.');
         window.location.href = '/admin.html';
-    } else {
-        currentUser = user;
-        initializePage();
+        return;
     }
+    
+    // Check if came from password verification
+    const hasAccess = sessionStorage.getItem('financialAccess');
+    if (!hasAccess) {
+        // Direct access without password - block it!
+        alert('⚠️ Unauthorized Access!\n\nPlease use the Financial button in admin dashboard and enter the password.');
+        window.location.href = '/admin.html';
+        return;
+    }
+    
+    // All good - user is authenticated and verified
+    currentUser = user;
+    initializePage();
 });
 
 // ==================== INITIALIZE PAGE ====================
