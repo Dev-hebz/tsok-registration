@@ -348,7 +348,7 @@ function exportToExcel() {
 
 // ==================== UTILITY FUNCTIONS ====================
 function formatMoney(amount) {
-    return '₱' + parseFloat(amount).toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,');
+    return 'KD ' + parseFloat(amount).toFixed(3).replace(/\d(?=(\d{3})+\.)/g, '$&,');
 }
 
 // Close modal when clicking outside
