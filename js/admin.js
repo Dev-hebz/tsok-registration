@@ -260,26 +260,26 @@ function updateStats() {
     
     // Level Stats (case-insensitive with trim)
     const elementary = allRegistrations.filter(r => {
-        const level = (r.academicInfo?.level || '').toLowerCase().trim();
+        const level = (r.educationalBackground?.level || '').toLowerCase().trim();
         return level === 'elementary';
     }).length;
     
     const secondary = allRegistrations.filter(r => {
-        const level = (r.academicInfo?.level || '').toLowerCase().trim();
+        const level = (r.educationalBackground?.level || '').toLowerCase().trim();
         return level === 'secondary';
     }).length;
     
     const others = allRegistrations.filter(r => {
-        const level = (r.academicInfo?.level || '').toLowerCase().trim();
+        const level = (r.educationalBackground?.level || '').toLowerCase().trim();
         return level === 'others';
     }).length;
     
     // Debug: Log level values
     console.log('Level Stats:', { elementary, secondary, others });
     console.log('Sample levels:', allRegistrations.slice(0, 5).map(r => ({
-        level: r.academicInfo?.level,
-        trimmed: (r.academicInfo?.level || '').trim(),
-        lower: (r.academicInfo?.level || '').toLowerCase().trim()
+        level: r.educationalBackground?.level,
+        trimmed: (r.educationalBackground?.level || '').trim(),
+        lower: (r.educationalBackground?.level || '').toLowerCase().trim()
     })));
 
     document.getElementById('totalRegistrations').textContent = total;
