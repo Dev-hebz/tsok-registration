@@ -258,10 +258,29 @@ function updateStats() {
     const partial = allRegistrations.filter(r => r.paymentStatus === 'Partial').length;
     const unpaid = allRegistrations.filter(r => r.paymentStatus === 'Unpaid').length;
     
-    // Level Stats
-    const elementary = allRegistrations.filter(r => r.academicInfo?.level === 'Elementary').length;
-    const secondary = allRegistrations.filter(r => r.academicInfo?.level === 'Secondary').length;
-    const others = allRegistrations.filter(r => r.academicInfo?.level === 'Others').length;
+    // Level Stats (case-insensitive with trim)
+    const elementary = allRegistrations.filter(r => {
+        const level = (r.academicInfo?.level || '').toLowerCase().trim();
+        return level === 'elementary';
+    }).length;
+    
+    const secondary = allRegistrations.filter(r => {
+        const level = (r.academicInfo?.level || '').toLowerCase().trim();
+        return level === 'secondary';
+    }).length;
+    
+    const others = allRegistrations.filter(r => {
+        const level = (r.academicInfo?.level || '').toLowerCase().trim();
+        return level === 'others';
+    }).length;
+    
+    // Debug: Log level values
+    console.log('Level Stats:', { elementary, secondary, others });
+    console.log('Sample levels:', allRegistrations.slice(0, 5).map(r => ({
+        level: r.academicInfo?.level,
+        trimmed: (r.academicInfo?.level || '').trim(),
+        lower: (r.academicInfo?.level || '').toLowerCase().trim()
+    })));
 
     document.getElementById('totalRegistrations').textContent = total;
     document.getElementById('totalMembers').textContent = members;
