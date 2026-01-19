@@ -25,6 +25,15 @@
         .stat-icon.red {
             background: linear-gradient(135deg, #EF4444 0%, #DC2626 100%);
         }
+        .stat-icon.teal {
+            background: linear-gradient(135deg, #14B8A6 0%, #0D9488 100%);
+        }
+        .stat-icon.indigo {
+            background: linear-gradient(135deg, #6366F1 0%, #4F46E5 100%);
+        }
+        .stat-icon.gray {
+            background: linear-gradient(135deg, #6B7280 0%, #4B5563 100%);
+        }
     </style>
     
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
@@ -197,6 +206,47 @@
                     <div class="stat-info">
                         <h3 id="totalUnpaid">0</h3>
                         <p>Unpaid</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Level Stats -->
+            <div class="stats-container" style="margin-top: 20px;">
+                <div class="stat-card">
+                    <div class="stat-icon teal">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M22 10v6M2 10l10-5 10 5-10 5z"></path>
+                            <path d="M6 12v5c3 3 9 3 12 0v-5"></path>
+                        </svg>
+                    </div>
+                    <div class="stat-info">
+                        <h3 id="totalElementary">0</h3>
+                        <p>Elementary</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon indigo">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M22 10v6M2 10l10-5 10 5-10 5z"></path>
+                            <path d="M6 12v5c3 3 9 3 12 0v-5"></path>
+                        </svg>
+                    </div>
+                    <div class="stat-info">
+                        <h3 id="totalSecondary">0</h3>
+                        <p>Secondary</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon gray">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <circle cx="12" cy="12" r="6"></circle>
+                            <circle cx="12" cy="12" r="2"></circle>
+                        </svg>
+                    </div>
+                    <div class="stat-info">
+                        <h3 id="totalOthers">0</h3>
+                        <p>Others</p>
                     </div>
                 </div>
             </div>
