@@ -257,6 +257,11 @@ function updateStats() {
     const paid = allRegistrations.filter(r => r.paymentStatus === 'Paid').length;
     const partial = allRegistrations.filter(r => r.paymentStatus === 'Partial').length;
     const unpaid = allRegistrations.filter(r => r.paymentStatus === 'Unpaid').length;
+    
+    // Level Stats
+    const elementary = allRegistrations.filter(r => r.academicInfo?.level === 'Elementary').length;
+    const secondary = allRegistrations.filter(r => r.academicInfo?.level === 'Secondary').length;
+    const others = allRegistrations.filter(r => r.academicInfo?.level === 'Others').length;
 
     document.getElementById('totalRegistrations').textContent = total;
     document.getElementById('totalMembers').textContent = members;
@@ -267,6 +272,9 @@ function updateStats() {
     document.getElementById('totalPaid').textContent = paid;
     document.getElementById('totalPartial').textContent = partial;
     document.getElementById('totalUnpaid').textContent = unpaid;
+    document.getElementById('totalElementary').textContent = elementary;
+    document.getElementById('totalSecondary').textContent = secondary;
+    document.getElementById('totalOthers').textContent = others;
 }
 
 // Display registrations in table
