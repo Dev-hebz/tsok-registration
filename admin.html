@@ -34,6 +34,16 @@
         .stat-icon.gray {
             background: linear-gradient(135deg, #6B7280 0%, #4B5563 100%);
         }
+        
+        /* Financial Button */
+        .btn-financial {
+            background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+            color: white;
+        }
+        
+        .btn-financial:hover {
+            background: linear-gradient(135deg, #059669 0%, #047857 100%);
+        }
     </style>
     
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
@@ -60,6 +70,13 @@
                         <line x1="12" y1="15" x2="12" y2="3"></line>
                     </svg>
                     Export to Excel
+                </button>
+                <button onclick="openFinancialAccess()" class="btn-financial">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="12" y1="1" x2="12" y2="23"></line>
+                        <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+                    </svg>
+                    💰 Financial
                 </button>
                 <button onclick="loadRegistrations()" class="btn-refresh">
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -317,6 +334,27 @@
             <div class="modal-footer">
                 <button onclick="closeDeleteModal()" class="btn-secondary">Cancel</button>
                 <button onclick="confirmDelete()" class="btn-danger">Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Financial Access Modal -->
+    <div id="financialModal" class="modal" style="display: none;">
+        <div class="modal-content" style="max-width: 400px;">
+            <div class="modal-header">
+                <h2>💰 Financial Access</h2>
+                <button onclick="closeFinancialModal()" class="close-btn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p style="margin-bottom: 20px; color: #6B7280;">Enter the treasurer password to access financial management.</p>
+                <div id="financialError" style="background: #FEE2E2; color: #991B1B; padding: 10px; border-radius: 5px; margin-bottom: 15px; display: none;"></div>
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; margin-bottom: 5px; font-weight: 600;">Password:</label>
+                    <input type="password" id="financialPassword" placeholder="Enter password" style="width: 100%; padding: 10px; border: 2px solid #E5E7EB; border-radius: 5px; font-size: 14px;">
+                </div>
+                <button onclick="verifyFinancialAccess()" style="width: 100%; padding: 12px; background: #10B981; color: white; border: none; border-radius: 5px; font-weight: 600; cursor: pointer; font-size: 16px;">
+                    🔓 Access Financial
+                </button>
             </div>
         </div>
     </div>
