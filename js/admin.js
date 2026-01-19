@@ -1634,7 +1634,8 @@ function verifyFinancialAccess() {
     const correctPassword = 'TSOKtreasurer!';
     
     if (password === correctPassword) {
-        // Correct password - open financial page
+        // Correct password - set session flag and open financial page
+        sessionStorage.setItem('financialAccess', 'true');
         window.open('/financial.html', '_blank');
         closeFinancialModal();
     } else {
