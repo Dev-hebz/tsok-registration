@@ -39,6 +39,9 @@ auth.onAuthStateChanged((user) => {
     // All good - user is authenticated and verified
     currentUser = user;
     initializePage();
+    
+    // Log access
+    logActivity('LOGIN', { message: 'Accessed financial management' });
 });
 
 // ==================== INITIALIZE PAGE ====================
@@ -196,6 +199,14 @@ async function handleAddTransaction(e) {
     try {
         await database.ref('financial/transactions').push(transaction);
         
+        // Log activity
+        await logActivity('ADD_TRANSACTION', {
+            type: transaction.type,
+            category: transaction.category,
+            amount: transaction.amount,
+            description: transaction.description
+        });
+        
         // Show success message
         const msg = document.getElementById('formMessage');
         msg.textContent = '✅ Transaction added successfully!';
@@ -254,6 +265,15 @@ async function handleEditTransaction(e) {
     
     try {
         await database.ref(`financial/transactions/${id}`).update(updates);
+        
+        // Log activity
+        await logActivity('EDIT_TRANSACTION', {
+            type: updates.type,
+            category: updates.category,
+            amount: updates.amount,
+            description: updates.description
+        });
+        
         closeEditModal();
         
         // Show success
@@ -275,6 +295,14 @@ async function deleteTransaction(transactionId) {
     if (!confirm(confirmMsg)) return;
     
     try {
+        // Log activity before deleting
+        await logActivity('DELETE_TRANSACTION', {
+            type: transaction.type,
+            category: transaction.category,
+            amount: transaction.amount,
+            description: transaction.description
+        });
+        
         await database.ref(`financial/transactions/${transactionId}`).remove();
         alert('✅ Transaction deleted successfully!');
     } catch (error) {
@@ -356,6 +384,164 @@ function exportToExcel() {
     
     const fileName = `TSOK-Financial-${new Date().toISOString().split('T')[0]}.xlsx`;
     XLSX.writeFile(wb, fileName);
+}
+
+// ==================== ACTIVITY LOG FUNCTIONS ====================
+async function logActivity(action, details = {}) {
+    const activityLog = {
+        action,
+        details,
+        user: currentUser ? currentUser.email : 'Unknown',
+        timestamp: Date.now(),
+        date: new Date().toISOString()
+    };
+    
+    try {
+        await database.ref('financialActivityLogs').push(activityLog);
+        console.log('Activity logged:', action);
+    } catch (error) {
+        console.error('Error logging activity:', error);
+    }
+}
+
+async function showActivityLog() {
+    document.getElementById('activityLogModal').style.display = 'flex';
+    const tbody = document.getElementById('activityLogBody');
+    
+    tbody.innerHTML = '<tr><td colspan="4" class="loading">Loading activity log...</td></tr>';
+    
+    try {
+        const snapshot = await database.ref('financialActivityLogs').orderByChild('timestamp').limitToLast(100).once('value');
+        const logs = [];
+        
+        snapshot.forEach((child) => {
+            logs.push({
+                id: child.key,
+                ...child.val()
+            });
+        });
+        
+        // Sort by newest first
+        logs.reverse();
+        
+        if (logs.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="4" class="no-data">
+                        <h3>No activity logs yet</h3>
+                        <p>Activity will be recorded when you add, edit, or delete transactions</p>
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+        
+        tbody.innerHTML = logs.map(log => {
+            const date = new Date(log.timestamp).toLocaleString('en-US', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+            
+            let actionBadge = '';
+            let detailsText = '';
+            
+            switch(log.action) {
+                case 'ADD_TRANSACTION':
+                    actionBadge = '<span class="badge cash-in">Added</span>';
+                    detailsText = `${log.details.type === 'cash_in' ? 'Cash IN' : 'Cash OUT'}: ${log.details.category} - ${formatMoney(log.details.amount)}`;
+                    break;
+                case 'EDIT_TRANSACTION':
+                    actionBadge = '<span class="badge" style="background: #DBEAFE; color: #1E40AF;">Edited</span>';
+                    detailsText = `${log.details.category} - ${formatMoney(log.details.amount)}`;
+                    break;
+                case 'DELETE_TRANSACTION':
+                    actionBadge = '<span class="badge cash-out">Deleted</span>';
+                    detailsText = `${log.details.category} - ${formatMoney(log.details.amount)}`;
+                    break;
+                case 'LOGIN':
+                    actionBadge = '<span class="badge" style="background: #D1FAE5; color: #065F46;">Login</span>';
+                    detailsText = 'Accessed financial management';
+                    break;
+                default:
+                    actionBadge = `<span class="badge" style="background: #E5E7EB; color: #374151;">${log.action}</span>`;
+                    detailsText = log.details.message || '-';
+            }
+            
+            return `
+                <tr>
+                    <td>${date}</td>
+                    <td>${actionBadge}</td>
+                    <td>${log.user}</td>
+                    <td>${detailsText}</td>
+                </tr>
+            `;
+        }).join('');
+        
+    } catch (error) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="4" class="no-data">
+                    <h3>Error loading activity log</h3>
+                    <p>${error.message}</p>
+                </td>
+            </tr>
+        `;
+    }
+}
+
+function closeActivityLog() {
+    document.getElementById('activityLogModal').style.display = 'none';
+}
+
+async function exportActivityLog() {
+    try {
+        const snapshot = await database.ref('financialActivityLogs').orderByChild('timestamp').once('value');
+        const logs = [];
+        
+        snapshot.forEach((child) => {
+            logs.push({
+                id: child.key,
+                ...child.val()
+            });
+        });
+        
+        // Sort by newest first
+        logs.reverse();
+        
+        const data = logs.map(log => ({
+            'Timestamp': new Date(log.timestamp).toLocaleString(),
+            'Action': log.action,
+            'User': log.user,
+            'Type': log.details.type || '-',
+            'Category': log.details.category || '-',
+            'Amount': log.details.amount || '-',
+            'Description': log.details.description || log.details.message || '-'
+        }));
+        
+        const wb = XLSX.utils.book_new();
+        const ws = XLSX.utils.json_to_sheet(data);
+        
+        ws['!cols'] = [
+            { wch: 20 }, // Timestamp
+            { wch: 20 }, // Action
+            { wch: 30 }, // User
+            { wch: 12 }, // Type
+            { wch: 20 }, // Category
+            { wch: 15 }, // Amount
+            { wch: 40 }  // Description
+        ];
+        
+        XLSX.utils.book_append_sheet(wb, ws, 'Activity Log');
+        
+        const fileName = `TSOK-Financial-ActivityLog-${new Date().toISOString().split('T')[0]}.xlsx`;
+        XLSX.writeFile(wb, fileName);
+        
+    } catch (error) {
+        alert('Error exporting activity log: ' + error.message);
+    }
 }
 
 // ==================== UTILITY FUNCTIONS ====================
