@@ -1618,4 +1618,45 @@ spinStyle.textContent = `
 `;
 document.head.appendChild(spinStyle);
 
+// ==================== FINANCIAL ACCESS FUNCTIONS ====================
+function openFinancialAccess() {
+    document.getElementById('financialModal').style.display = 'flex';
+    document.getElementById('financialPassword').value = '';
+    document.getElementById('financialError').style.display = 'none';
+}
+
+function closeFinancialModal() {
+    document.getElementById('financialModal').style.display = 'none';
+}
+
+function verifyFinancialAccess() {
+    const password = document.getElementById('financialPassword').value;
+    const correctPassword = 'TSOKtreasurer!';
+    
+    if (password === correctPassword) {
+        // Correct password - open financial page
+        window.open('/financial.html', '_blank');
+        closeFinancialModal();
+    } else {
+        // Wrong password
+        const errorDiv = document.getElementById('financialError');
+        errorDiv.textContent = '❌ Incorrect password. Please try again.';
+        errorDiv.style.display = 'block';
+        document.getElementById('financialPassword').value = '';
+        document.getElementById('financialPassword').focus();
+    }
+}
+
+// Close modal on Enter key
+document.addEventListener('DOMContentLoaded', function() {
+    const passwordInput = document.getElementById('financialPassword');
+    if (passwordInput) {
+        passwordInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                verifyFinancialAccess();
+            }
+        });
+    }
+});
+
 console.log('TSOK Admin Dashboard with Activity Log - Developed by TSOK 2026 Officers');
