@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TSOK Financial Management</title>
+    <link rel="icon" type="image/png" href="/images/tsok-logo.png">
+    
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+    
+    <!-- SheetJS for Excel Export -->
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        .header {
+            background: white;
+            padding: 20px 30px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .logo {
+            height: 50px;
+            width: auto;
+        }
+
+        .header-text h1 {
+            color: #2E4C96;
+            font-size: 24px;
+            margin-bottom: 5px;
+        }
+
+        .header-text p {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: transform 0.2s;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .btn-export {
+            background: #10B981;
+            color: white;
+        }
+
+        .btn-back {
+            background: #6B7280;
+            color: white;
+        }
+
+        /* Balance Cards */
+        .balance-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .balance-card {
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .balance-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+        }
+
+        .balance-icon.green {
+            background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+        }
+
+        .balance-icon.red {
+            background: linear-gradient(135deg, #EF4444 0%, #DC2626 100%);
+        }
+
+        .balance-icon.blue {
+            background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
+        }
+
+        .balance-info h3 {
+            font-size: 32px;
+            color: #1F2937;
+            margin-bottom: 5px;
+        }
+
+        .balance-info p {
+            color: #6B7280;
+            font-size: 14px;
+        }
+
+        /* Main Content */
+        .content-grid {
+            display: grid;
+            grid-template-columns: 400px 1fr;
+            gap: 20px;
+        }
+
+        @media (max-width: 1024px) {
+            .content-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .card {
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .card h2 {
+            color: #2E4C96;
+            margin-bottom: 20px;
+            font-size: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* Form Styles */
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #374151;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #E5E7EB;
+            border-radius: 5px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #2E4C96;
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .radio-group {
+            display: flex;
+            gap: 20px;
+            margin-top: 8px;
+        }
+
+        .radio-group label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            font-weight: normal;
+        }
+
+        .radio-group input[type="radio"] {
+            width: auto;
+        }
+
+        .btn-submit {
+            width: 100%;
+            padding: 12px;
+            background: #2E4C96;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 10px;
+        }
+
+        .btn-submit:hover {
+            background: #1e3a8a;
+        }
+
+        /* Transactions Table */
+        .table-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .search-filter {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            flex: 1;
+        }
+
+        .search-filter input,
+        .search-filter select {
+            padding: 8px 12px;
+            border: 2px solid #E5E7EB;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+
+        .table-wrapper {
+            overflow-x: auto;
+            max-height: 600px;
+            overflow-y: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 800px;
+        }
+
+        thead {
+            background: #2E4C96;
+            color: white;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        th {
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        tbody tr {
+            border-bottom: 1px solid #E5E7EB;
+            transition: background 0.2s;
+        }
+
+        tbody tr:hover {
+            background: #F9FAFB;
+        }
+
+        td {
+            padding: 12px;
+            font-size: 14px;
+        }
+
+        .badge {
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .badge.cash-in {
+            background: #D1FAE5;
+            color: #065F46;
+        }
+
+        .badge.cash-out {
+            background: #FEE2E2;
+            color: #991B1B;
+        }
+
+        .amount-positive {
+            color: #059669;
+            font-weight: 600;
+        }
+
+        .amount-negative {
+            color: #DC2626;
+            font-weight: 600;
+        }
+
+        .btn-small {
+            padding: 6px 12px;
+            font-size: 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 5px;
+        }
+
+        .btn-edit {
+            background: #3B82F6;
+            color: white;
+        }
+
+        .btn-delete {
+            background: #EF4444;
+            color: white;
+        }
+
+        .no-data {
+            text-align: center;
+            padding: 40px;
+            color: #6B7280;
+        }
+
+        .no-data svg {
+            width: 64px;
+            height: 64px;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            max-width: 500px;
+            width: 90%;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .modal-header h2 {
+            color: #2E4C96;
+            font-size: 20px;
+            margin: 0;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #6B7280;
+        }
+
+        .success-message {
+            background: #D1FAE5;
+            color: #065F46;
+            padding: 12px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+            display: none;
+        }
+
+        .error-message {
+            background: #FEE2E2;
+            color: #991B1B;
+            padding: 12px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+            display: none;
+        }
+
+        /* Loading */
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #6B7280;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .header-actions {
+                width: 100%;
+            }
+
+            .btn {
+                flex: 1;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-left">
+                <img src="/images/tsok-logo.png" alt="TSOK Logo" class="logo">
+                <div class="header-text">
+                    <h1>💰 TSOK Financial Management</h1>
+                    <p>Statement of Accounts & Treasury</p>
+                </div>
+            </div>
+            <div class="header-actions">
+                <button onclick="exportToExcel()" class="btn btn-export">
+                    📥 Export to Excel
+                </button>
+                <a href="/admin.html" class="btn btn-back">
+                    ← Back to Dashboard
+                </a>
+            </div>
+        </header>
+
+        <!-- Balance Summary Cards -->
+        <div class="balance-cards">
+            <div class="balance-card">
+                <div class="balance-icon green">💵</div>
+                <div class="balance-info">
+                    <h3 id="totalCashIn">₱0.00</h3>
+                    <p>Total Cash IN</p>
+                </div>
+            </div>
+            <div class="balance-card">
+                <div class="balance-icon red">💸</div>
+                <div class="balance-info">
+                    <h3 id="totalCashOut">₱0.00</h3>
+                    <p>Total Cash OUT</p>
+                </div>
+            </div>
+            <div class="balance-card">
+                <div class="balance-icon blue">💰</div>
+                <div class="balance-info">
+                    <h3 id="currentBalance">₱0.00</h3>
+                    <p>Current Balance</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content Grid -->
+        <div class="content-grid">
+            <!-- Add Transaction Form -->
+            <div class="card">
+                <h2>➕ Add Transaction</h2>
+                <div id="formMessage" class="success-message"></div>
+                <form id="transactionForm">
+                    <div class="form-group">
+                        <label>Transaction Type *</label>
+                        <div class="radio-group">
+                            <label>
+                                <input type="radio" name="type" value="cash_in" checked>
+                                Cash IN
+                            </label>
+                            <label>
+                                <input type="radio" name="type" value="cash_out">
+                                Cash OUT
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="date">Date *</label>
+                        <input type="date" id="date" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="category">Category *</label>
+                        <select id="category" required>
+                            <option value="">Select category...</option>
+                            <optgroup label="Cash IN">
+                                <option value="Membership Fees">Membership Fees</option>
+                                <option value="Registration Fees">Registration Fees</option>
+                                <option value="Incidental Fees SPLE">Incidental Fees SPLE</option>
+                                <option value="Donations">Donations</option>
+                                <option value="Fundraising">Fundraising</option>
+                                <option value="Others - IN">Others</option>
+                            </optgroup>
+                            <optgroup label="Cash OUT">
+                                <option value="Office Supplies">Office Supplies</option>
+                                <option value="Events/Activities">Events/Activities</option>
+                                <option value="Transportation">Transportation</option>
+                                <option value="Communications">Communications</option>
+                                <option value="Honorarium">Honorarium</option>
+                                <option value="Utilities">Utilities</option>
+                                <option value="Miscellaneous">Miscellaneous</option>
+                            </optgroup>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="description">Description *</label>
+                        <textarea id="description" placeholder="Enter transaction details..." required></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="amount">Amount (₱) *</label>
+                        <input type="number" id="amount" step="0.01" min="0" placeholder="0.00" required>
+                    </div>
+
+                    <button type="submit" class="btn-submit">
+                        💾 Save Transaction
+                    </button>
+                </form>
+            </div>
+
+            <!-- Transactions Table -->
+            <div class="card">
+                <h2>📊 Transactions History</h2>
+                <div class="table-header">
+                    <div class="search-filter">
+                        <input type="text" id="searchInput" placeholder="Search transactions...">
+                        <select id="typeFilter">
+                            <option value="">All Types</option>
+                            <option value="cash_in">Cash IN</option>
+                            <option value="cash_out">Cash OUT</option>
+                        </select>
+                        <input type="date" id="dateFrom" placeholder="From">
+                        <input type="date" id="dateTo" placeholder="To">
+                    </div>
+                </div>
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Type</th>
+                                <th>Category</th>
+                                <th>Description</th>
+                                <th>Amount</th>
+                                <th>Balance</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="transactionsBody">
+                            <tr>
+                                <td colspan="7" class="loading">Loading transactions...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Modal -->
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>✏️ Edit Transaction</h2>
+                <button onclick="closeEditModal()" class="close-btn">&times;</button>
+            </div>
+            <div id="editMessage" class="error-message"></div>
+            <form id="editForm">
+                <input type="hidden" id="editId">
+                <div class="form-group">
+                    <label>Transaction Type *</label>
+                    <div class="radio-group">
+                        <label>
+                            <input type="radio" name="editType" value="cash_in">
+                            Cash IN
+                        </label>
+                        <label>
+                            <input type="radio" name="editType" value="cash_out">
+                            Cash OUT
+                        </label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="editDate">Date *</label>
+                    <input type="date" id="editDate" required>
+                </div>
+                <div class="form-group">
+                    <label for="editCategory">Category *</label>
+                    <select id="editCategory" required>
+                        <option value="">Select category...</option>
+                        <optgroup label="Cash IN">
+                            <option value="Membership Fees">Membership Fees</option>
+                            <option value="Registration Fees">Registration Fees</option>
+                            <option value="Incidental Fees SPLE">Incidental Fees SPLE</option>
+                            <option value="Donations">Donations</option>
+                            <option value="Fundraising">Fundraising</option>
+                            <option value="Others - IN">Others</option>
+                        </optgroup>
+                        <optgroup label="Cash OUT">
+                            <option value="Office Supplies">Office Supplies</option>
+                            <option value="Events/Activities">Events/Activities</option>
+                            <option value="Transportation">Transportation</option>
+                            <option value="Communications">Communications</option>
+                            <option value="Honorarium">Honorarium</option>
+                            <option value="Utilities">Utilities</option>
+                            <option value="Miscellaneous">Miscellaneous</option>
+                        </optgroup>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="editDescription">Description *</label>
+                    <textarea id="editDescription" required></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="editAmount">Amount (₱) *</label>
+                    <input type="number" id="editAmount" step="0.01" min="0" required>
+                </div>
+                <button type="submit" class="btn-submit">
+                    💾 Update Transaction
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <script src="/js/financial.js"></script>
+</body>
+</html>
